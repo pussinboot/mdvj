@@ -5,8 +5,10 @@
 #
 #####
 # TO DO
-# fix swipers :^)
-#
+# fix swipers :^) -> object with local state that resets with opposite direction
+# lights
+# preset manager -> save db as csv
+# preset sequence playback
 
 import pygame
 import pygame.midi

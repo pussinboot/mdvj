@@ -77,6 +77,8 @@ class Config():
                             self.d2[set] = 'a' 
                         elif set == 'PREV':
                             self.d2[set] = 'd'
+                        elif set == '{}' or set == '[]':
+                            self.d2[set] = 'w'
                         elif n > 120 or n < 9:
                             self.d2[set] = 's' # simple
                         else:

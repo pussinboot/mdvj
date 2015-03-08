@@ -295,7 +295,7 @@ def typer(string=None,*args):
            event('left_shift','`')
          
         elif i == '<':
-           event('left_shift',')')
+           event('left_shift',',')
        
         elif i == '>':
            event('left_shift','.')

@@ -49,7 +49,9 @@ def pg_setup():
 		exit()
 	# advanced mode
 	out.write([[[183,0,111],pygame.midi.time()]])
-
+	# touchstrip data mode
+	out.write([[[183,20,19],pygame.midi.time()]])
+	out.write([[[184,20,19],pygame.midi.time()]])
 	return screen, inp, out, event_get
 
 def pg_quit(inp,out):

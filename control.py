@@ -24,7 +24,7 @@ class Controller():
 		self.desc_dict = {}
 		for i in range(len(binds)):
 			self.desc_dict[binds[i]] = descs[i]
-
+		self.lastpad = [-1, -1, -1]
 		self.setup()
 
 	def setup(self):
@@ -60,22 +60,27 @@ class Controller():
 					typer(k[1])
 		elif o == 'c' or o == 'w': #complex or sWiper
 			oldn = self.stored_n[k]
-			if oldn == -1: self.stored_n[k] = n
+			if oldn == -1: 
+				self.stored_n[k] = n
 			else:
 				self.stored_n[k] = n 
 				n = n - oldn
-				if o == 'w': self.stored_diff[k] = self.stored_diff[k] - n
+				while n > 4 or n < -4:
+					n = int(n // slow) + 1
+				if o == 'w': 
+					self.stored_diff[k] = self.stored_diff[k] - n			
 				if n > 0:
-					for _ in range(n//slow + 1):
+					for _ in range(n):
 						typer(k[0])
 				else:
-					for _ in range(-1*n//slow + 1):
+					for _ in range(-1*n):
 						typer(k[1])
 
 		elif o == 'p': #pad
 			if n == 127:
 				if self.debug: print("set {} pad {}".format(k[0],k[1]))
 				preset = self.db[self.currgroups[int(k[0])]][int(k[1])]
+				self.lastpad = self.light(k[0],k[1],15,'g')
 				self.select_preset(preset)
 				for w in self.ws:
 					self.stored_diff[w] = 0
@@ -90,8 +95,15 @@ class Controller():
 
 	def advance(self,n):
 		if self.currgroups[0] + n >= 0 and self.currgroups[1] + n < len(self.db):
+			temp = self.lastpad
+			self.light(*temp)
 			self.currgroups = [self.currgroups[0]+n, self.currgroups[1]+n]
 			self.gui.place_presets(self.db,*self.currgroups)
+			#if temp[2] > 0:
+			if temp[0] + n == 2:
+				self.light(0,temp[1],temp[2])
+			elif temp[0] + n == -1:
+				self.light(1,temp[1],temp[2])
 
 	def reset(self,k,o,n):
 		if o == 'c':
@@ -106,6 +118,18 @@ class Controller():
 			self.stored_n[k] = -1
 		else:
 			self.key_parser(k,o,n)
+
+	def light(self,n,m,i=5,rga='r'): # n - set num, m - pad num, i - intensity, rga - color
+		if i < 0: i = 0
+		elif i > 15: i = 15
+		# red add 0
+		if rga == 'a': i += 64 # amber
+		elif rga == 'g': i += 112 # green
+		newpad = [int(n),int(m), i]
+		self.out.write([[[151+newpad[0],60+newpad[1],newpad[2]],pygame.midi.time()]])
+		if self.lastpad != [-1, -1, -1] and self.lastpad != newpad:
+			self.out.write([[[151+self.lastpad[0],60+self.lastpad[1],0],pygame.midi.time()]])
+		return newpad
 
 	def start(self):
 		if self.debug:

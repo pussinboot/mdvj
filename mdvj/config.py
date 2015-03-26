@@ -6,13 +6,13 @@ import configparser
 # variables
 class Config():
     # screen,binds,descs,numpads,numnumpads
-    def __init__(self,screen,binds,descs,numpads=8,numnumpads= 2):
+    def __init__(self,screen,binds,descs,numpads=8,numnumpads= 2, debug = False):
         self.d1 = {}
         self.d2 = {}
         self.screen = screen
         self.Config = configparser.RawConfigParser()
         self.Config.optionxform = str 
-
+        self.debug = debug
         self.the_binds = binds[::-1]
         self.their_descs = descs[::-1]
 
@@ -88,6 +88,6 @@ class Config():
                    
             if inp.poll():
                 midi_events = inp.read(10)
-                print(midi_events[0][0])
+                if self.debug: print(midi_events[0][0])
                 last = [midi_events[0][0][0],midi_events[0][0][1]]
                 n = midi_events[0][0][2]

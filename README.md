@@ -1,4 +1,4 @@
-### mdvj v0.0.2 - milkdrop vj midi controller
+### mdvj v0.0.3 - milkdrop vj midi controller :notes:
 
 
 for use with novation twitch controller

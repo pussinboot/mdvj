@@ -1,12 +1,12 @@
 import pygame
 import pygame.midi
 from pygame.locals import *
-from giantwin32 import * # keypressing stuff
+from mdvj.giantwin32 import * # keypressing stuff
 import configparser
 
 class Controller():
 
-	def __init__(self,inp,out,event_get,binds,descs,db,gui,debug=True):
+	def __init__(self,inp,out,event_get,binds,descs,db,gui,debug=True,twitch=True):
 		self.inp = inp
 		self.out = out
 		self.event_get = event_get
@@ -25,6 +25,7 @@ class Controller():
 		for i in range(len(binds)):
 			self.desc_dict[binds[i]] = descs[i]
 		self.lastpad = [-1, -1, -1]
+		self.twitch = twitch
 		self.setup()
 
 	def setup(self):
@@ -126,6 +127,7 @@ class Controller():
 		if rga == 'a': i += 64 # amber
 		elif rga == 'g': i += 112 # green
 		newpad = [int(n),int(m), i]
+		if not self.twitch: return newpad # break if not twitch 
 		self.out.write([[[151+newpad[0],60+newpad[1],newpad[2]],pygame.midi.time()]])
 		if self.lastpad != [-1, -1, -1] and self.lastpad != newpad:
 			self.out.write([[[151+self.lastpad[0],60+self.lastpad[1],0],pygame.midi.time()]])

@@ -135,4 +135,4 @@ def main():
 if __name__=='__main__':
 	db = Database("C:/Program Files (x86)/Winamp/plugins/milkdrop2/presets")
 	db.start()
-	print(db[0][-1].get_name())
+	#print(db[0][-1].get_name())

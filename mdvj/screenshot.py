@@ -9,11 +9,11 @@ import win32api
 import win32con
 import win32gui
 import configparser
-from mbox import MessageBox
+from mdvj.mbox import MessageBox
 import win32ui
 from ctypes import windll
 
-vjmode = False
+vjmode = True
 class Screenshot():
 	def __init__(self):
 		self.root = Tk()
@@ -58,13 +58,20 @@ class Screenshot():
 		return True
 
 	def alt_tab(self):
-		hwnd = win32gui.FindWindow(None, 'MilkDrop 2')
-		win32gui.SetForegroundWindow(hwnd)
+		try:
+			hwnd = win32gui.FindWindow(None, 'MilkDrop 2')
+			win32gui.SetForegroundWindow(hwnd)
+		except:
+			print('are you sure milkdrop is running?')
+			exit()
 
 	def control(self):
 		if vjmode:
-			hwnd = win32gui.FindWindow(None, 'MilkDrop Console [VJ Mode]')
-			win32gui.SetForegroundWindow(hwnd)
+			try:
+				hwnd = win32gui.FindWindow(None, 'MilkDrop Console [VJ Mode]')
+				win32gui.SetForegroundWindow(hwnd)
+			except:
+				vjmode = False
 	
 	def save_screen(self,filename):
 		hwnd = win32gui.FindWindow(None, 'MilkDrop 2')

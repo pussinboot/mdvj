@@ -12,7 +12,6 @@
 # move selecting midi device to first run?
 
 import pygame
-import pygame.midi
 from pygame.locals import *
 import configparser
 import os.path

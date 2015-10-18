@@ -98,7 +98,7 @@ class Preset(object):
 		# show the whole thing
 		pygame.display.flip()
 
-def main():
+def main(mydb):
 	pygame.init()
 
 	WIDTH = 800
@@ -135,4 +135,5 @@ def main():
 if __name__=='__main__':
 	db = Database("C:/Program Files (x86)/Winamp/plugins/milkdrop2/presets")
 	db.start()
+	main(db)
 	#print(db[0][-1].get_name())

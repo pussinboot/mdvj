@@ -1,8 +1,12 @@
 import tkinter as tk
+import tkinter.messagebox as tkmessagebox
+
+import os
 from PIL import ImageTk,Image
 
 from db import Database
 from control_md import ControlMD
+from screenshot import Screenshot
 
 class MainGui:
 	""" the main gui """
@@ -119,9 +123,23 @@ class PresetContainer:
 	def select(self,event):
 		self.padgroup.parent.mdc.select_preset(self.preset)
 		
+class Setup:
+	""" loads config if exists, otherwise guides you through setup process"""
+
+	def __init__(self):
+		if os.path.exists('vj_config.ini'):
+			# load config
+			print('config exists')
+		else:
+			Screenshot()
+			# and then configure midi controller : )
+			# and then finna run the fun
+
 
 if __name__ == '__main__':
 	root = tk.Tk()
 	root.title("mdvj")
+	root.resizable(0,0)
+	#Setup()
 	gui = MainGui(root)
 	root.mainloop()

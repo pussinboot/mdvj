@@ -4,10 +4,10 @@ import sys;
 
 is64bit = sys.maxsize > 2**32
 if is64bit:
-    pygame_whl="http://www.lfd.uci.edu/~gohlke/pythonlibs/z94jfosk/pygame-1.9.2a0-cp34-none-win_amd64.whl"
+    pygame_whl="http://www.lfd.uci.edu/~gohlke/pythonlibs/xmshzit7/pygame-1.9.2a0-cp34-none-win_amd64.whl"
     pywin32_whl = "https://pypi.python.org/packages/cp34/p/pypiwin32/pypiwin32-219-cp34-none-win_amd64.whl"
 else:
-    pygame_whl="https://testpypi.python.org/packages/cp34/p/pygame/pygame-1.9.2a0-cp34-none-win32.whl"
+    pygame_whl="http://www.lfd.uci.edu/~gohlke/pythonlibs/xmshzit7/pygame-1.9.2a0-cp34-none-win32.whl"
     pywin32_whl = "https://pypi.python.org/packages/cp34/p/pypiwin32/pypiwin32-219-cp34-none-win32.whl"
 setup(
     name='mdvj',

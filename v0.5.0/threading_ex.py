@@ -81,7 +81,7 @@ class ThreadedClient:
             # some cleanup before actually shutting it down.
             import sys
             sys.exit(1)
-        self.master.after(100, self.periodicCall)
+        self.master.after(10, self.periodicCall)
 
     def workerThread1(self):
         """
@@ -102,7 +102,6 @@ class ThreadedClient:
     def endApplication(self):
         self.running = 0
 
-rand = random.Random()
 root = tk.Tk()
 
 client = ThreadedClient(root)

@@ -10,6 +10,7 @@ class ConfigMidi:
 	def __init__(self,master):
 		self.master = master
 		self.queue = None
+		self.start_fun = lambda : None
 		# first popup with selection of inputs
 		# and outputs as well
 
@@ -19,6 +20,9 @@ class ConfigMidi:
 		# right click to enter params urself
 
 		# when done save to vj_config.ini
+	def set_start_op(self,fun, *args):
+		self.start_fun = lambda *args: fun(*args)
+
 	def start(self):
 		# if no device
 		self.device_selection()
@@ -58,6 +62,7 @@ class ConfigMidi:
 			#return tor # this wont work..
 			print(tor)
 			self.MC.set_inp(tor[0])
+			self.start_fun()
 
 
 		device_select.protocol("WM_DELETE_WINDOW",return_vals)
@@ -97,6 +102,6 @@ if __name__ == '__main__':
 	config = ConfigMidi(root)
 	midi_thread = MidiClient(root,config)
 	config.set_MC(midi_thread.MC)
+	config.set_start_op(midi_thread.start)
 	config.start()
-	midi_thread.start()
 	root.mainloop()

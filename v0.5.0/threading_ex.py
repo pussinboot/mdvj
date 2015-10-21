@@ -24,8 +24,7 @@ class GuiPart:
     def __init__(self, master, queue, endCommand):
         self.queue = queue
         # Set up the GUI
-        console = tk.Button(master, text='Done', command=endCommand)
-        console.pack()
+        master.protocol("WM_DELETE_WINDOW",endCommand)
         # Add more GUI stuff here
 
     def processIncoming(self):

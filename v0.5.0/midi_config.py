@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import os, configparser
 
-from midi_control import MidiClient
+from midi_control import MidiClient, MidiControl
 
 class ConfigMidi:
 	"""
@@ -15,9 +15,12 @@ class ConfigMidi:
 		self.start_fun = lambda : None
 		self.midi_started = False
 		self.input_storage = None
+		self.MC = MidiControl()
 		# tk stuff
 		self.nb = ttk.Notebook(self.master)
 		self.nb.pack()
+
+		self.nb.bind_all('<<NotebookTabChanged>>',lambda event: self.master.update())
 		# description of binds and type restrictions # these are only things that have corresponding keybinds that are sent to md
 		# 'r' - relative, 'o' - on/off
 		desc_type = {'prev' : 'o', 'play/pause' : 'o', 'stop' : 'o', 'next' : 'o', 
@@ -44,9 +47,8 @@ class ConfigMidi:
 		ckeys = ['zoom', 'rotate', 'motion left/right', 'motion up/down', 'change amplitude', 'cycle waveform',	'scale waveform', 'waveform opacity', 'scale 2nd layer', 'flip 2nd layer', 'brightness']
 		self.c_page = self.nb_page(ckeys)
 		self.nb.add(self.c_page,text='preset control')
-		#for i in range(15):
-		#	cl = self.config_line(self.master,self.descs[i],self.binds[i],self.control_types[i]) # create StringVar and pass it as the bind
-		#	cl.pack()
+		
+		self.start()
 		# first popup with selection of inputs
 		# and outputs as well
 		#self.start()
@@ -72,9 +74,6 @@ class ConfigMidi:
 	def spit_vals(self,event):
 		for key in self.dict:
 			print(key,self.dict[key][0].get(),self.dict[key][1].get())
-
-	def set_start_op(self,fun, *args):
-		self.start_fun = lambda *args: fun(*args)
 
 	def start(self):
 		# if no device
@@ -158,7 +157,11 @@ class ConfigMidi:
 			self.input_storage = [choices[0], str(tor[0])]
 			self.MC.set_inp(tor[0])
 			self.midi_started = True
-			self.start_fun()
+			self.midi_thread = MidiClient(self.master,self,self.MC,250)
+			self.queue = self.midi_thread.queue
+			self.midi_thread.start()
+			self.master.update()
+			
 
 		device_select.protocol("WM_DELETE_WINDOW",return_vals)
 
@@ -177,8 +180,7 @@ class ConfigMidi:
 	def set_queue(self,queue):
 		self.queue = queue
 
-	def set_MC(self,MC):
-		self.MC = MC
+		
 
 	def processIncoming(self):
 		pass
@@ -278,10 +280,6 @@ def main():
 	root = tk.Tk()
 	root.wm_state('iconic')
 	config = ConfigMidi(root)
-	midi_thread = MidiClient(root,config,100)
-	config.set_MC(midi_thread.MC)
-	config.set_start_op(midi_thread.start)
-	config.start()
 	root.mainloop()
 
 

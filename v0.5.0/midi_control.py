@@ -61,7 +61,7 @@ class MidiClient:
 	endApplication could reside in the GUI part, but putting them here
 	means that you have all the thread controls in a single place.
 	"""
-	def __init__(self, master, gui,refresh_int=25):
+	def __init__(self, master, gui, mc=None, refresh_int=25):
 		"""
 		Start the GUI and the asynchronous threads. We are in the main
 		(original) thread of the application, which will later be used by
@@ -69,7 +69,10 @@ class MidiClient:
 		"""
 		self.master = master
 		self.refresh_int = refresh_int
-		self.MC = MidiControl()
+		if not mc:
+			self.MC = MidiControl()
+		else:
+			self.MC = mc
 		# Create the queue
 		self.queue = queue.Queue()
 

@@ -124,20 +124,19 @@ class PresetContainer:
 	def select(self,event):
 		self.padgroup.parent.mdc.select_preset(self.preset)
 		
-class Setup:
+def Setup():
 	""" loads config if exists, otherwise guides you through setup process"""
-
-	def __init__(self):
-		if os.path.exists('vj_config.ini'):
-			# load config
-			print('config exists')
-		else:
-			#Screenshot()
-			#ConfigMidi(tk.Toplevel())
-			midi_config.main()
-			main()
-			# and then configure midi controller : )
-			# and then finna run the fun
+	
+	if os.path.exists('vj_config.ini'):
+		# load config
+		print('config exists')
+	else:
+		#Screenshot()
+		#ConfigMidi(tk.Toplevel())
+		midi_config.main()
+		#main()
+		# and then configure midi controller : )
+		# and then finna run the fun
 
 def main():
 	root = tk.Tk()

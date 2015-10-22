@@ -68,16 +68,16 @@ class MainGui:
 			self.next_col_button.config(state='disabled')
 
 	def go_l(self):
-		self.padgroup_l.init_containers(self.db[self.padgroup_l_n])
-		self.padgroup_r.init_containers(self.db[self.padgroup_r_n])
+		self.padgroup_l.init_containers(self.db[self.padgroup_l_n-1])
+		self.padgroup_r.init_containers(self.db[self.padgroup_r_n-1])
 		self.control.go_lr(0)
 		self.padgroup_l_n -= 1
 		self.padgroup_r_n -= 1
 		self.check_lr()
 
 	def go_r(self):
-		self.padgroup_l.init_containers(self.db[self.padgroup_l_n])
-		self.padgroup_r.init_containers(self.db[self.padgroup_r_n])
+		self.padgroup_l.init_containers(self.db[self.padgroup_l_n+1])
+		self.padgroup_r.init_containers(self.db[self.padgroup_r_n+1])
 		self.control.go_lr(1)
 		self.padgroup_l_n += 1
 		self.padgroup_r_n += 1
@@ -157,6 +157,7 @@ def main():
 	root.title("mdvj")
 	root.resizable(0,0)
 	gui = MainGui(root,"C:/Code/python/mdvj/v0.5.0/scrot") # fake data
+	gui.control.load('Twitch.ini')
 	root.mainloop()
 
 if __name__ == '__main__':

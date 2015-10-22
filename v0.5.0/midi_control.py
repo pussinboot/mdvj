@@ -101,6 +101,7 @@ class MidiClient:
 		if not self.running:
 			# maybe gui.quit
 			self.MC.quit()
+			self.gui.quit()
 			self.gui.master.destroy()
 		self.master.after(self.refresh_int, self.periodicCall)
 

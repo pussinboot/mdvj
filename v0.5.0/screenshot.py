@@ -1,20 +1,19 @@
 # NEEDS TO BE REWRITTEN SO THAT
 # when creating database rite
 # first setup press any button to take screenshot and it'll save ^^
-import os, time
-import shutil
+import os, time, glob, shutil
+
 from PIL import ImageTk,Image
+
 import tkinter as tk
 import tkinter.filedialog as tkfiledialog
 import tkinter.messagebox as tkmessagebox
-#from tkinter import Tk, filedialog, messagebox
-import glob
-import win32api
-import win32con
-import win32gui
+
+import win32api, win32con, win32gui, win32ui
+
 import configparser
-import win32ui
-from ctypes import windll
+
+#from ctypes import windll
 
 class Screenshot():
 	def __init__(self,debug=False):

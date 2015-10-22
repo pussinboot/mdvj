@@ -14,7 +14,7 @@ class ConfigMidi:
 		self.queue = None
 		self.start_fun = lambda : None
 		self.midi_started = False
-
+		self.input_storage = None
 		# tk stuff
 		self.nb = ttk.Notebook(self.master)
 		self.nb.pack()
@@ -50,7 +50,6 @@ class ConfigMidi:
 		# first popup with selection of inputs
 		# and outputs as well
 		#self.start()
-		self.load()
 		# then presented with list of 
 		# midi-key | md function
 
@@ -154,9 +153,9 @@ class ConfigMidi:
 			if choices[1] in outputs:
 				tor[1] = device_dict[1][choices[1]]
 			device_select.destroy()
+			self.load(choices[0]+'.ini')
 			self.master.wm_state('normal')
-			#return tor # this wont work..
-			#print(tor)
+			self.input_storage = [choices[0], str(tor[0])]
 			self.MC.set_inp(tor[0])
 			self.midi_started = True
 			self.start_fun()
@@ -238,24 +237,36 @@ class ConfigMidi:
 			Config.read(fname)
 			for o in self.dict:
 				try:
-					key = Config.get('Key',o)
+					key = Config.get('Keys',o)
+	
 					control_type = Config.get('Type',o)
 					self.dict[o][0].set(key)
 					self.dict[o][1].set(control_type)
 				except:
 					print(o,'failed to load')
+			return int(Config.get('IO','Input ID'))
 
-	def save(self,fname='vj_config.ini'):
+	def save(self):
+		if not self.input_storage[0] or self.input_storage[0] == '-':
+			return
+		fname = self.input_storage[0]+'.ini'
+
 		Config = configparser.RawConfigParser()
 		Config.optionxform = str 
 		cfgfile = open(fname,'w')
-		if not Config.has_section("Key"):  
-			Config.add_section('Key')
-		if not Config.has_section("Type"):  
-			Config.add_section('Type')
+		if not Config.has_section('IO'):
+			Config.add_section('IO')
+		Config.set('IO','Input Name',self.input_storage[0])
+		Config.set('IO','Input ID',self.input_storage[1])
+		keyname = "Keys"
+		typename = "Type"
+		if not Config.has_section(keyname):  
+			Config.add_section(keyname)
+		if not Config.has_section(typename):  
+			Config.add_section(typename)
 		for k in self.dict:
-			Config.set('Key',k,self.dict[k][0].get())
-			Config.set('Type',k,self.dict[k][1].get())
+			Config.set(keyname,k,self.dict[k][0].get())
+			Config.set(typename,k,self.dict[k][1].get())
 		Config.write(cfgfile)
 		cfgfile.close()
 
@@ -263,15 +274,16 @@ class ConfigMidi:
 		self.save()
 		#self.master.destroy()
 
-
-
-
-if __name__ == '__main__':
+def main():
 	root = tk.Tk()
 	root.wm_state('iconic')
 	config = ConfigMidi(root)
-	midi_thread = MidiClient(root,config,250)
+	midi_thread = MidiClient(root,config,100)
 	config.set_MC(midi_thread.MC)
 	config.set_start_op(midi_thread.start)
 	config.start()
 	root.mainloop()
+
+
+if __name__ == '__main__':
+	main()

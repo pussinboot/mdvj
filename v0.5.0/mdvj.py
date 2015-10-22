@@ -7,6 +7,7 @@ from PIL import ImageTk,Image
 from db import Database
 from control_md import ControlMD
 from screenshot import Screenshot
+import midi_config
 
 class MainGui:
 	""" the main gui """
@@ -131,15 +132,21 @@ class Setup:
 			# load config
 			print('config exists')
 		else:
-			Screenshot()
+			#Screenshot()
+			#ConfigMidi(tk.Toplevel())
+			midi_config.main()
+			main()
 			# and then configure midi controller : )
 			# and then finna run the fun
 
-
-if __name__ == '__main__':
+def main():
 	root = tk.Tk()
 	root.title("mdvj")
 	root.resizable(0,0)
-	#Setup()
 	gui = MainGui(root)
 	root.mainloop()
+if __name__ == '__main__':
+	
+	Setup()
+	#
+	#

@@ -90,6 +90,7 @@ class MidiClient:
 		# More can be made if necessary
 		self.running = 1
 		self.thread = threading.Thread(target=action,args=(self.queue,))
+		self.thread.setDaemon(True)
 		self.thread.start()
 		
 		# Start the periodic call in the GUI to check if the queue contains

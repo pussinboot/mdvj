@@ -20,11 +20,13 @@ class MainGui:
 		self.db.start()
 		starting_len = len(self.db)
 
-		self.control = Controller(self)
 		# tk stuff
 		self.root = root
 		self.frame = tk.Frame(root)
 		self.padframe = tk.Frame(self.frame)
+
+		self.control = Controller(self)
+		self.control.load('Twitch.ini') # for testing purposes
 
 		self.padgroup_l_n = -1
 		self.padgroup_r_n = -1
@@ -52,7 +54,7 @@ class MainGui:
 		self.padframe.pack()
 		self.controlframe.pack()
 		self.frame.pack()
-		
+
 	def check_lr(self):
 		if self.padgroup_l_n > 0:
 			# enable l
@@ -82,6 +84,10 @@ class MainGui:
 		self.padgroup_l_n += 1
 		self.padgroup_r_n += 1
 		self.check_lr()
+
+	def quit(self):
+		#self.root.destroy()
+		pass
 
 
 class PadGroup:
@@ -156,8 +162,7 @@ def main():
 	root = tk.Tk()
 	root.title("mdvj")
 	root.resizable(0,0)
-	gui = MainGui(root,"C:/Code/python/mdvj/v0.5.0/scrot") # fake data
-	gui.control.load('Twitch.ini')
+	gui = MainGui(root)#,"C:/Code/python/mdvj/v0.5.0/scrot") # fake data
 	root.mainloop()
 
 if __name__ == '__main__':

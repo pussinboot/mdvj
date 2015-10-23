@@ -1,7 +1,7 @@
 import tkinter as tk
 import tkinter.messagebox as tkmessagebox
 
-import os
+import os, queue
 from PIL import ImageTk,Image
 
 from db import Database
@@ -25,24 +25,22 @@ class MainGui:
 		self.frame = tk.Frame(root)
 		self.padframe = tk.Frame(self.frame)
 
-		self.control = Controller(self)
-		inp = self.control.load('Twitch.ini') # for testing purposes
-		self.control.midi_start(inp)
-
-		self.padgroup_l_n = -1
-		self.padgroup_r_n = -1
-		if starting_len > 1:
-			self.padgroup_l_n = 0
-			self.padgroup_r_n = 1
-			self.padgroup_l = PadGroup(self,0,self.db[0])
-			self.padgroup_r = PadGroup(self,1,self.db[1])
-		else:
-			if starting_len > 0:
-				self.padgroup_l_n = 0
-				self.padgroup_l = PadGroup(self,0,self.db[0])
-			else:
-				self.padgroup_l = PadGroup(self,0)
-			self.padgroup_r = PadGroup(self,1)
+		self.queue = None
+		
+		#self.padgroup_l_n = -1
+		#self.padgroup_r_n = -1
+		#if starting_len > 1:
+		self.padgroup_l_n = 0
+		self.padgroup_r_n = 1
+		self.padgroup_l = SuperPadGroup(self,0)#,self.db[0])
+		self.padgroup_r = SuperPadGroup(self,1)#,self.db[1])
+		#else:
+		#	if starting_len > 0:
+		#		self.padgroup_l_n = 0
+		#		self.padgroup_l = SuperPadGroup(self,0)#,self.db[0])
+		#	else:
+		#		self.padgroup_l = SuperPadGroup(self,0)
+		#	self.padgroup_r = SuperPadGroup(self,1)
 		self.padgroups = [self.padgroup_l,self.padgroup_r]
 
 
@@ -55,6 +53,32 @@ class MainGui:
 		self.padframe.pack()
 		self.controlframe.pack()
 		self.frame.pack()
+
+		self.control = Controller(self)
+		inp = self.control.load('Twitch.ini') # for testing purposes
+		self.control.midi_start(inp)
+
+	def set_queue(self,queue):
+			self.queue = queue
+
+	def processIncoming(self): # change queue to only handle events that would cause gui changes
+		while self.queue.qsize():
+			try:
+				msg = self.queue.get(0)
+				# Check contents of message and do what it says
+				# As a test, we simply print it
+				print( msg)
+				if msg[0] == 'pad':
+					self.control.select_pad_gui(*msg[1])
+				elif msg[0] == 'lr':
+					if msg[1] == 0:
+						self.go_l()
+					else:
+						self.go_r()
+				
+			except queue.Empty:
+				pass
+
 
 	def check_lr(self):
 		if self.padgroup_l_n > 0:
@@ -74,8 +98,8 @@ class MainGui:
 		self.control.MC.pause()
 		self.padgroup_l_n -= 1
 		self.padgroup_r_n -= 1
-		self.padgroup_l.init_containers(self.db[self.padgroup_l_n])
-		self.padgroup_r.init_containers(self.db[self.padgroup_r_n])
+		self.padgroup_l.show_group(self.padgroup_l_n)
+		self.padgroup_r.show_group(self.padgroup_r_n)
 		self.root.update_idletasks()
 		self.check_lr()
 		self.control.MC.resume()
@@ -84,8 +108,8 @@ class MainGui:
 		self.control.MC.pause()
 		self.padgroup_l_n += 1
 		self.padgroup_r_n += 1
-		self.padgroup_l.init_containers(self.db[self.padgroup_l_n])
-		self.padgroup_r.init_containers(self.db[self.padgroup_r_n])
+		self.padgroup_l.show_group(self.padgroup_l_n)
+		self.padgroup_r.show_group(self.padgroup_r_n)
 		self.root.update_idletasks()
 		self.check_lr()
 		self.control.MC.resume()
@@ -93,7 +117,30 @@ class MainGui:
 	def quit(self):
 		#self.root.destroy()
 		pass
+class SuperPadGroup:
+	""" stores stacked PadGroups """
 
+	def __init__(self,parent,lr):
+		self.parent = parent
+		self.padgroup_cont = []
+		self.current_group = lr
+		self.frame = tk.Frame(parent.padframe,borderwidth=5,relief=tk.RIDGE)
+		self.frame.pack(side=tk.LEFT, fill="both", expand=True) #pack(side=tk.LEFT)
+		self.frame.grid_rowconfigure(0, weight=1)
+		self.frame.grid_columnconfigure(0, weight=1) 
+		for i in range(len(self.parent.db)):
+			new_pad_group = PadGroup(self,lr,self.parent.db[i])
+			self.padgroup_cont.append(new_pad_group)
+		self.show_group(self.current_group)
+
+	def show_group(self,groupno):
+		self.current_group = groupno
+		cgroup = self.padgroup_cont[groupno]
+		cgroup.frame.tkraise()
+		cgroup.deselect_all()
+
+	def current_padgroup(self):
+		return self.padgroup_cont[self.current_group]
 
 class PadGroup:
 	""" stores 8 presets """
@@ -101,22 +148,29 @@ class PadGroup:
 	def __init__(self,parent,lr,presets=None):
 		self.parent = parent
 		self.preset_containers = [None]*8
+		self.max_len = len(presets)
 		self.lr = lr
-		self.frame = tk.Frame(parent.padframe,borderwidth=5,relief=tk.RIDGE)
-		self.frame.pack(side=tk.LEFT)
+		self.frame = tk.Frame(parent.frame)#,borderwidth=5,relief=tk.RIDGE)
+		self.frame.grid(row=0, column=0, sticky='news')#pack(side=tk.LEFT, fill="both", expand=True) #pack(side=tk.LEFT)
+		#self.frame.grid_rowconfigure(0, weight=1)
+		#self.frame.grid_columnconfigure(0, weight=1) 
 		if presets:
 			self.init_containers(presets)
 
 	def init_containers(self,presets):
-		max_len = len(presets)
 		for r in range(2):
 			for c in range(4):
 				i = r * 4 + c
-				if i >= max_len :
+				if i >= self.max_len :
 					return
 				#print(self.db[r][c])
 				self.preset_containers[i] = PresetContainer(self,presets[i],self.lr,i)
 				self.preset_containers[i].grid(row=r,column=c)
+				#self.parent.root.update_idletasks()
+
+	def deselect_all(self):
+		for i in range(self.max_len):
+			self.preset_containers[i].deselected()
 
 
 class PresetContainer:
@@ -140,7 +194,7 @@ class PresetContainer:
 		self.label.config(text=new_text)
 
 	def select(self,event=None):
-		self.padgroup.parent.control.select_pad(*self.coords)
+		self.padgroup.parent.parent.control.select_pad(*self.coords)
 		#self.padgroup.parent.control.select_pad_gui(*self.coords)
 		#self.selected()
 

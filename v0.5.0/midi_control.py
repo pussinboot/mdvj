@@ -17,11 +17,14 @@ class MidiControl:
 		pygame.midi.init()
 		self.inp = None #pygame.midi.Input(pygame.midi.get_default_input_id())
 
-	def set_inp(self,inp):
-		try:
-			self.inp = pygame.midi.Input(inp)
-		except:
-			self.inp = pygame.midi.Input(pygame.midi.get_default_input_id())
+	def set_inp(self,inp=None):
+		if inp:
+			try:
+				self.inp = pygame.midi.Input(inp)
+				return
+			except:
+				pass
+		self.inp = pygame.midi.Input(pygame.midi.get_default_input_id())
 
 	def collect_device_info(self): # using this can construct list of inputs/outputs and have their corresponding channels
 		inputs = {}
@@ -78,7 +81,7 @@ class MidiClient:
 		# Set up the GUI part
 		self.gui = gui # setup elsewhere, needs to have a set_queue fxn and a processIncoming fxn
 		self.gui.set_queue(self.queue)
-		
+		self.run_periodic = None
 
 
 	def start(self,action=None):
@@ -96,17 +99,29 @@ class MidiClient:
 		# anything
 		self.periodicCall()
 
+	def pause(self):
+		self.gui.master.after_cancel(self.run_periodic)
+
 	def periodicCall(self):
 		"""
-		Check every 100 ms if there is something new in the queue.
+		Check every _ ms if there is something new in the queue.
 		"""
 		self.gui.processIncoming()
 		if not self.running:
 			# maybe gui.quit
+			self.gui.master.after_cancel(self.run_periodic)
 			self.MC.quit()
 			self.gui.quit()
 			self.gui.master.destroy()
-		self.gui.master.after(self.refresh_int, self.periodicCall)
+		self.run_periodic = self.gui.master.after(self.refresh_int, self.periodicCall)
+
+	def pause(self):
+		if self.run_periodic:
+			self.gui.master.after_cancel(self.run_periodic)
+
+	def resume(self):
+		if self.run_periodic:
+			self.run_periodic = self.gui.master.after(self.refresh_int, self.periodicCall)
 
 	def workerThread1(self,queue):
 		"""
@@ -116,9 +131,6 @@ class MidiClient:
 		control.
 		"""
 		while self.running:
-			# To simulate asynchronous I/O, we create a random number at
-			# random intervals. Replace the following 2 lines with the real
-			# thing.
 			
 			msg = self.MC.test_inp()
 			if msg:

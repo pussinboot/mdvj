@@ -26,7 +26,8 @@ class MainGui:
 		self.padframe = tk.Frame(self.frame)
 
 		self.control = Controller(self)
-		self.control.load('Twitch.ini') # for testing purposes
+		inp = self.control.load('Twitch.ini') # for testing purposes
+		self.control.midi_start(inp)
 
 		self.padgroup_l_n = -1
 		self.padgroup_r_n = -1
@@ -46,8 +47,8 @@ class MainGui:
 
 
 		self.controlframe = tk.Frame(self.frame)
-		self.prev_col_button = tk.Button(self.controlframe,text="<",command=self.go_l,pady=0)
-		self.next_col_button = tk.Button(self.controlframe,text=">",command=self.go_r,pady=0)
+		self.prev_col_button = tk.Button(self.controlframe,text="<",command=lambda: self.control.go_lr(0),pady=0)
+		self.next_col_button = tk.Button(self.controlframe,text=">",command=lambda: self.control.go_lr(1),pady=0)
 		self.check_lr()
 		self.next_col_button.pack(side=tk.RIGHT,anchor=tk.SE)
 		self.prev_col_button.pack(side=tk.RIGHT,anchor=tk.SE)
@@ -70,20 +71,24 @@ class MainGui:
 			self.next_col_button.config(state='disabled')
 
 	def go_l(self):
-		self.padgroup_l.init_containers(self.db[self.padgroup_l_n-1])
-		self.padgroup_r.init_containers(self.db[self.padgroup_r_n-1])
-		self.control.go_lr(0)
+		self.control.MC.pause()
 		self.padgroup_l_n -= 1
 		self.padgroup_r_n -= 1
+		self.padgroup_l.init_containers(self.db[self.padgroup_l_n])
+		self.padgroup_r.init_containers(self.db[self.padgroup_r_n])
+		self.root.update_idletasks()
 		self.check_lr()
+		self.control.MC.resume()
 
 	def go_r(self):
-		self.padgroup_l.init_containers(self.db[self.padgroup_l_n+1])
-		self.padgroup_r.init_containers(self.db[self.padgroup_r_n+1])
-		self.control.go_lr(1)
+		self.control.MC.pause()
 		self.padgroup_l_n += 1
 		self.padgroup_r_n += 1
+		self.padgroup_l.init_containers(self.db[self.padgroup_l_n])
+		self.padgroup_r.init_containers(self.db[self.padgroup_r_n])
+		self.root.update_idletasks()
 		self.check_lr()
+		self.control.MC.resume()
 
 	def quit(self):
 		#self.root.destroy()
@@ -136,6 +141,7 @@ class PresetContainer:
 
 	def select(self,event=None):
 		self.padgroup.parent.control.select_pad(*self.coords)
+		#self.padgroup.parent.control.select_pad_gui(*self.coords)
 		#self.selected()
 
 	def selected(self):
@@ -162,7 +168,7 @@ def main():
 	root = tk.Tk()
 	root.title("mdvj")
 	root.resizable(0,0)
-	gui = MainGui(root)#,"C:/Code/python/mdvj/v0.5.0/scrot") # fake data
+	gui = MainGui(root,"C:/Code/python/mdvj/v0.5.0/scrot") # fake data
 	root.mainloop()
 
 if __name__ == '__main__':

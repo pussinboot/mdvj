@@ -157,7 +157,7 @@ class ConfigMidi:
 			self.input_storage = [choices[0], str(tor[0])]
 			self.MC.set_inp(tor[0])
 			self.midi_started = True
-			self.midi_thread = MidiClient(self.master,self,self.MC,250)
+			self.midi_thread = MidiClient(self,self.MC,250)
 			self.queue = self.midi_thread.queue
 			self.midi_thread.start()
 			self.master.update()

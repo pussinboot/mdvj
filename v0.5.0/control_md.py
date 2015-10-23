@@ -1,5 +1,6 @@
 import giantwin32 as kp # keypressing stuff
-import os, configparser
+import os, configparser, win32gui, queue
+from midi_control import MidiClient
 
 class ControlMD():
 	"""
@@ -31,10 +32,17 @@ class Controller():
 	interface through which can control md
 	"""
 
-	def __init__(self,gui,MC=None):
+	def __init__(self,gui):
 		self.mdc = ControlMD()
 		self.gui = gui
-		self.MC = MC # midi thread
+		self.master = self.gui.root
+		self.quit = self.gui.quit
+
+		# midi control
+		self.queue = None
+		self.MC = MidiClient(self) # midi thread
+
+
 		self.last_pad = None # store last pad
 		self.last_n = {} # store last key
 
@@ -46,17 +54,32 @@ class Controller():
 							'stop':'v',
 							'next':'b',
 							#preset control
-							'zoom in / zoom out':'iI',
-							'push motion left/right':'[]',
-							'push motion up/down':'{}',
-							'rotate left/rotate right':'<>',
-							'shrink/grow amplitude of warp':'oO',
+							'zoom':'iI',
+							'motion left/right':'[]',
+							'motion up/down':'{}',
+							'rotate':'<>',
+							'change amplitude':'oO',
 							'cycle waveform':'w',
-							'scale waveform down/up':'jJ',
-							'make the waveform more transparent/solid':'eE',
-							'decrease/increase brightness':'gG',
-							'scale 2nd graphics layer down/up':'qQ',
-							'flip 2nd graphics layer (cycle)':'F'}
+							'scale waveform':'jJ',
+							'waveform opacity':'eE',
+							'brightness':'gG',
+							'scale 2nd layer':'qQ',
+							'flip 2nd layer':'F'}
+
+	def set_queue(self,queue):
+		self.queue = queue
+
+	def processIncoming(self):
+		while self.queue.qsize():
+			try:
+				msg = self.queue.get(0)
+				# Check contents of message and do what it says
+				# As a test, we simply print it
+				#print( msg)
+				if msg[0] in self.key_to_fun:
+					self.key_to_fun[msg[0]](msg[1])
+			except queue.Empty:
+				pass
 
 	def get_pad_container(self,lr,padno):
 		if lr in [0,1] and padno in [0,1,2,3,4,5,6,7]:
@@ -76,14 +99,16 @@ class Controller():
 	def go_lr(self,lr):
 		# left - lr = 0, right - lr = 1
 		if lr == 0 and self.gui.padgroup_l_n > 0:
-			self.last_pad[0] += 1
-			pc = self.get_pad_container(*self.last_pad)
-			if pc: pc.selected()
+			if self.last_pad: 
+				self.last_pad[0] += 1
+				pc = self.get_pad_container(*self.last_pad)
+				if pc: pc.selected()
 
 		elif lr == 1 and self.gui.padgroup_r_n < len(self.gui.db) - 1:
-			self.last_pad[0] -= 1
-			pc = self.get_pad_container(*self.last_pad)
-			if pc: pc.selected()		
+			if self.last_pad:
+				self.last_pad[0] -= 1
+				pc = self.get_pad_container(*self.last_pad)
+				if pc: pc.selected()		
 
 	### midi 
 	# 3 types:
@@ -122,20 +147,20 @@ class Controller():
 		self.mdc.alt_tab('MilkDrop 2')
 		if n > 0:
 			for _ in range(n):
-				kp.typer(key_to_key[key][0])
+				kp.typer(self.key_to_key[key][0])
 		else:
 			for _ in range(-1*n):
-				kp.typer(key_to_key[key][1])
+				kp.typer(self.key_to_key[key][1])
 		self.mdc.alt_tab('mdvj')
 
 	def type_s(self,key,n):
 		self.mdc.alt_tab('MilkDrop 2')
 		if n > 64:
 			for _ in range(128-n):
-				kp.typer(key_to_key[key][0])
+				kp.typer(self.key_to_key[key][0])
 		else:
 			for _ in range(n):
-				kp.typer(key_to_key[key][1])
+				kp.typer(self.key_to_key[key][1])
 		self.mdc.alt_tab('mdvj')
 
 	def type_p(self,key,n):
@@ -165,7 +190,9 @@ class Controller():
 					print(o,'failed to load')
 			# print(self.key_to_key)
 			# print(self.key_to_fun)
-			return int(Config.get('IO','Input ID'))
+			# return int(Config.get('IO','Input ID'))
+			self.MC.MC.set_inp(int(Config.get('IO','Input ID')))
+			self.MC.start()
 
 #if __name__ == '__main__':
 #	Config = configparser.RawConfigParser()

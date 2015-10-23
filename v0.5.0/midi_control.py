@@ -61,13 +61,12 @@ class MidiClient:
 	endApplication could reside in the GUI part, but putting them here
 	means that you have all the thread controls in a single place.
 	"""
-	def __init__(self, master, gui, mc=None, refresh_int=25):
+	def __init__(self, gui, mc=None, refresh_int=25):
 		"""
 		Start the GUI and the asynchronous threads. We are in the main
 		(original) thread of the application, which will later be used by
 		the GUI. We spawn a new thread for the worker.
 		"""
-		self.master = master
 		self.refresh_int = refresh_int
 		if not mc:
 			self.MC = MidiControl()
@@ -85,7 +84,7 @@ class MidiClient:
 	def start(self,action=None):
 		if not action:
 			action = self.workerThread1
-		self.master.protocol("WM_DELETE_WINDOW",self.endApplication)
+		self.gui.master.protocol("WM_DELETE_WINDOW",self.endApplication)
 		# Set up the thread to do asynchronous I/O
 		# More can be made if necessary
 		self.running = 1
@@ -107,7 +106,7 @@ class MidiClient:
 			self.MC.quit()
 			self.gui.quit()
 			self.gui.master.destroy()
-		self.master.after(self.refresh_int, self.periodicCall)
+		self.gui.master.after(self.refresh_int, self.periodicCall)
 
 	def workerThread1(self,queue):
 		"""

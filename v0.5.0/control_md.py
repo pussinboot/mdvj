@@ -40,7 +40,7 @@ class Controller():
 
 		# midi control
 		self.queue = None
-		self.MC = MidiClient(self) # midi thread
+		self.MC = MidiClient(self,refresh_int=25) # midi thread
 
 
 		self.last_pad = None # store last pad
@@ -69,23 +69,50 @@ class Controller():
 	def set_queue(self,queue):
 		self.queue = queue
 
-	def processIncoming(self):
+	def processIncoming(self): # change queue to only handle events that would cause gui changes
 		while self.queue.qsize():
 			try:
 				msg = self.queue.get(0)
 				# Check contents of message and do what it says
 				# As a test, we simply print it
-				#print( msg)
-				if msg[0] in self.key_to_fun:
-					self.key_to_fun[msg[0]](msg[1])
+				print( msg)
+				if msg[0] == 'pad':
+					self.select_pad_gui(*msg[1])
+				elif msg[0] == 'lr':
+					if msg[1] == 0:
+						self.gui.go_l()
+					else:
+						self.gui.go_r()
+				
 			except queue.Empty:
 				pass
+
+	def midi_start(self,inp=None):
+		self.MC.MC.set_inp(inp)
+		def process_midi(queue):
+			while self.MC.running:
+				msg = self.MC.MC.test_inp()
+				if msg:
+					#queue.put(mg)
+					if msg[0] in self.key_to_fun:
+						resp = self.key_to_fun[msg[0]](msg[1])
+						if resp: queue.put(resp)
+
+		self.MC.start(process_midi)
+
+	###
+	# update gui to correspond with action
 
 	def get_pad_container(self,lr,padno):
 		if lr in [0,1] and padno in [0,1,2,3,4,5,6,7]:
 			return self.gui.padgroups[lr].preset_containers[padno]
 
 	def select_pad(self,lr,padno):
+		pc = self.get_pad_container(lr,padno)
+		self.mdc.select_preset(pc.preset)
+		self.queue.put(['pad',[lr, padno]])
+
+	def select_pad_gui(self,lr,padno):
 		if self.last_pad and self.last_pad != [lr, padno]: # deselect (in gui) last pad
 			lastpc = self.get_pad_container(*self.last_pad)
 			if lastpc: lastpc.deselected()
@@ -93,22 +120,25 @@ class Controller():
 		pc = self.get_pad_container(lr,padno)
 		if pc: 
 			pc.selected()
-			self.mdc.select_preset(pc.preset)
 			self.last_pad = [lr, padno]
 
 	def go_lr(self,lr):
+		#print(lr)
 		# left - lr = 0, right - lr = 1
+
 		if lr == 0 and self.gui.padgroup_l_n > 0:
+			self.queue.put(['lr',lr])
 			if self.last_pad: 
 				self.last_pad[0] += 1
 				pc = self.get_pad_container(*self.last_pad)
-				if pc: pc.selected()
+				if pc: self.queue.put(['pad',self.last_pad])#pc.selected()
 
 		elif lr == 1 and self.gui.padgroup_r_n < len(self.gui.db) - 1:
+			self.queue.put(['lr',lr])
 			if self.last_pad:
 				self.last_pad[0] -= 1
 				pc = self.get_pad_container(*self.last_pad)
-				if pc: pc.selected()		
+				if pc: self.queue.put(['pad',self.last_pad])#pc.selected()
 
 	### midi 
 	# 3 types:
@@ -151,7 +181,7 @@ class Controller():
 		else:
 			for _ in range(-1*n):
 				kp.typer(self.key_to_key[key][1])
-		self.mdc.alt_tab('mdvj')
+		#self.mdc.alt_tab('mdvj')
 
 	def type_s(self,key,n):
 		self.mdc.alt_tab('MilkDrop 2')
@@ -161,7 +191,7 @@ class Controller():
 		else:
 			for _ in range(n):
 				kp.typer(self.key_to_key[key][1])
-		self.mdc.alt_tab('mdvj')
+		#self.mdc.alt_tab('mdvj')
 
 	def type_p(self,key,n):
 		if n == 127:
@@ -172,6 +202,7 @@ class Controller():
 	def type_pad(self,lr,pad,n):
 		if n == 127:
 			self.select_pad(lr,pad)
+			# return ['pad',[lr, pad]]
 
 	def load(self,fname):
 		if os.path.exists(fname):
@@ -190,9 +221,8 @@ class Controller():
 					print(o,'failed to load')
 			# print(self.key_to_key)
 			# print(self.key_to_fun)
-			# return int(Config.get('IO','Input ID'))
-			self.MC.MC.set_inp(int(Config.get('IO','Input ID')))
-			self.MC.start()
+			return int(Config.get('IO','Input ID'))
+
 
 #if __name__ == '__main__':
 #	Config = configparser.RawConfigParser()

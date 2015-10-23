@@ -1,5 +1,5 @@
 import giantwin32 as kp # keypressing stuff
-import os, configparser, win32gui, queue
+import os, configparser, win32gui
 from midi_control import MidiClient
 
 class ControlMD():
@@ -35,11 +35,13 @@ class Controller():
 	def __init__(self,gui):
 		self.mdc = ControlMD()
 		self.gui = gui
+
 		self.master = self.gui.root
 		self.quit = self.gui.quit
+		self.set_queue = self.gui.set_queue
+		self.processIncoming = self.gui.processIncoming
 
 		# midi control
-		self.queue = None
 		self.MC = MidiClient(self,refresh_int=25) # midi thread
 
 
@@ -66,27 +68,6 @@ class Controller():
 							'scale 2nd layer':'qQ',
 							'flip 2nd layer':'F'}
 
-	def set_queue(self,queue):
-		self.queue = queue
-
-	def processIncoming(self): # change queue to only handle events that would cause gui changes
-		while self.queue.qsize():
-			try:
-				msg = self.queue.get(0)
-				# Check contents of message and do what it says
-				# As a test, we simply print it
-				print( msg)
-				if msg[0] == 'pad':
-					self.select_pad_gui(*msg[1])
-				elif msg[0] == 'lr':
-					if msg[1] == 0:
-						self.gui.go_l()
-					else:
-						self.gui.go_r()
-				
-			except queue.Empty:
-				pass
-
 	def midi_start(self,inp=None):
 		self.MC.MC.set_inp(inp)
 		def process_midi(queue):
@@ -105,12 +86,12 @@ class Controller():
 
 	def get_pad_container(self,lr,padno):
 		if lr in [0,1] and padno in [0,1,2,3,4,5,6,7]:
-			return self.gui.padgroups[lr].preset_containers[padno]
+			return self.gui.padgroups[lr].current_padgroup().preset_containers[padno]
 
 	def select_pad(self,lr,padno):
 		pc = self.get_pad_container(lr,padno)
 		self.mdc.select_preset(pc.preset)
-		self.queue.put(['pad',[lr, padno]])
+		self.gui.queue.put(['pad',[lr, padno]])
 
 	def select_pad_gui(self,lr,padno):
 		if self.last_pad and self.last_pad != [lr, padno]: # deselect (in gui) last pad
@@ -120,6 +101,7 @@ class Controller():
 		pc = self.get_pad_container(lr,padno)
 		if pc: 
 			pc.selected()
+			self.master.update_idletasks()
 			self.last_pad = [lr, padno]
 
 	def go_lr(self,lr):
@@ -127,18 +109,18 @@ class Controller():
 		# left - lr = 0, right - lr = 1
 
 		if lr == 0 and self.gui.padgroup_l_n > 0:
-			self.queue.put(['lr',lr])
+			self.gui.queue.put(['lr',lr])
 			if self.last_pad: 
 				self.last_pad[0] += 1
 				pc = self.get_pad_container(*self.last_pad)
-				if pc: self.queue.put(['pad',self.last_pad])#pc.selected()
+				if pc: self.gui.queue.put(['pad',self.last_pad])#pc.selected()
 
 		elif lr == 1 and self.gui.padgroup_r_n < len(self.gui.db) - 1:
-			self.queue.put(['lr',lr])
+			self.gui.queue.put(['lr',lr])
 			if self.last_pad:
 				self.last_pad[0] -= 1
 				pc = self.get_pad_container(*self.last_pad)
-				if pc: self.queue.put(['pad',self.last_pad])#pc.selected()
+				if pc: self.gui.queue.put(['pad',self.last_pad])#pc.selected()
 
 	### midi 
 	# 3 types:

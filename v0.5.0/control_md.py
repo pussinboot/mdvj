@@ -15,7 +15,7 @@ class ControlMD():
 		name = preset.name
 		kp.press('l')
 		kp.press('home')
-		print(name)
+		# print(name)
 		kp.fast_press('down_arrow',preset.n)
 		kp.press('enter','esc')
 		self.alt_tab('mdvj')
@@ -69,17 +69,23 @@ class Controller():
 							'flip 2nd layer':'F'}
 
 	def midi_start(self,inp=None):
-		self.MC.MC.set_inp(inp)
-		def process_midi(queue):
-			while self.MC.running:
-				msg = self.MC.MC.test_inp()
-				if msg:
-					#queue.put(mg)
-					if msg[0] in self.key_to_fun:
-						resp = self.key_to_fun[msg[0]](msg[1])
-						if resp: queue.put(resp)
+		if inp:
+			self.MC.MC.set_inp(inp)
+			def process_midi(queue):
+				while self.MC.running:
+					msg = self.MC.MC.test_inp()
+					if msg:
+						#queue.put(mg)
+						if msg[0] in self.key_to_fun:
+							resp = self.key_to_fun[msg[0]](msg[1])
+							if resp: queue.put(resp)
 
-		self.MC.start(process_midi)
+			self.MC.start(process_midi)
+		else:
+			def mouse_control(queue):
+				while self.MC.running:
+					pass
+			self.MC.start(mouse_control)
 
 	###
 	# update gui to correspond with action
@@ -187,7 +193,7 @@ class Controller():
 			# return ['pad',[lr, pad]]
 
 	def load(self,fname):
-		if os.path.exists(fname):
+		if fname and os.path.exists(fname):
 			Config = configparser.RawConfigParser()
 			Config.optionxform = str 
 			Config.read(fname)

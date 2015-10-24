@@ -1,7 +1,7 @@
 import tkinter as tk
 import tkinter.messagebox as tkmessagebox
 
-import os, queue
+import os, queue, pickle
 from PIL import ImageTk,Image
 
 from db import Database
@@ -12,10 +12,12 @@ import midi_config
 class MainGui:
 	""" the main gui """
 
-	def __init__(self,root,path="C:/Program Files (x86)/Winamp/plugins/milkdrop2/presets"):
+	def __init__(self,root,path="C:/Program Files (x86)/Winamp/plugins/milkdrop2/presets",midi_save=None):
 		# mdvj stuff
 		# load saved directory, if no saved dir then run first setup (screenshot then control)
 		# add menu to configure input or reselect db
+		self.path = path
+		self.midi_save = midi_save
 		self.db = Database(path) # will update later to select your folder first
 		self.db.start()
 		starting_len = len(self.db)
@@ -54,9 +56,22 @@ class MainGui:
 		self.controlframe.pack()
 		self.frame.pack()
 
+		self.setup_menubar()
+
 		self.control = Controller(self)
-		inp = self.control.load('Twitch.ini') # for testing purposes
+		if midi_save: midi_save = midi_save + '.ini'
+		inp = self.control.load(midi_save) 
 		self.control.midi_start(inp)
+
+	def re_screenshot(self):
+		s = Screenshot(first_time=False)
+		self.path = s.start()
+
+	def re_configure(self):
+		# quit
+		self.control.MC.running = False
+		input_store = midi_config.main()
+		Setup(input_store[0])
 
 	def set_queue(self,queue):
 			self.queue = queue
@@ -67,7 +82,7 @@ class MainGui:
 				msg = self.queue.get(0)
 				# Check contents of message and do what it says
 				# As a test, we simply print it
-				print( msg)
+				# print( msg)
 				if msg[0] == 'pad':
 					self.control.select_pad_gui(*msg[1])
 				elif msg[0] == 'lr':
@@ -116,7 +131,18 @@ class MainGui:
 
 	def quit(self):
 		#self.root.destroy()
-		pass
+		savedata = {'directory':self.path,'last_device':self.midi_save}
+		Save(savedata)
+
+	def setup_menubar(self):
+		self.menubar = tk.Menu(self.root)
+		self.filemenu = tk.Menu(self.menubar,tearoff=0)
+		self.filemenu.add_command(label="retake screenshots",command=self.re_screenshot)
+		self.filemenu.add_command(label="reconfig midi",command=self.re_configure)
+		self.menubar.add_cascade(label='settings',menu=self.filemenu)
+
+		self.root.config(menu=self.menubar)
+		
 class SuperPadGroup:
 	""" stores stacked PadGroups """
 
@@ -204,29 +230,61 @@ class PresetContainer:
 	def deselected(self):
 		self.label.config(relief=tk.FLAT)
 		
-def Setup():
+def Setup(input_name=None):
 	""" loads config if exists, otherwise guides you through setup process"""
+
+	savedata = Load()
 	
-	if os.path.exists('vj_config.ini'):
-		# load config
-		print('config exists')
+	if not savedata:
+		s = Screenshot()
+		directory = s.start()
+		input_store = midi_config.main() # needs rewrite to follow the use queue to update gui standard
+		if input_store:
+			input_name = input_store[0]
 	else:
-		#Screenshot()
+		directory = savedata['directory']
+		if not input_name: input_name = savedata['last_device']
+		#s = Screenshot()
+		#directory = s.start()
+		#print(directory)
 		#ConfigMidi(tk.Toplevel())
-		#midi_config.main()
-		main()
-		# and then configure midi controller : )
-		# and then finna run the fun
+	root = tk.Tk()
+	root.title('mdvj')
+	root.resizable(0,0)	
+	gui = MainGui(root,directory,input_name)
+	root.mainloop()
+
+def Load(filename="saved_state"):
+		if os.path.exists(filename):
+			with open(filename,'rb') as read:
+				try:
+					pickle_d = pickle.load(read)
+					return pickle_d
+				except:
+					if debug: print('error reading',filename)
+					read.close()
+					os.remove(filename)
+		else:
+			print("no saved state")
+
+def Save(to_save=None,filename="saved_state"):
+	"""
+	save a dictionary to pickle
+	"""
+	if not to_save:
+		return
+	with open(filename,'wb') as write:
+		pickle.dump(to_save,write)
 
 def main():
 	root = tk.Tk()
 	root.title("mdvj")
 	root.resizable(0,0)
-	gui = MainGui(root,"C:/Code/python/mdvj/v0.5.0/scrot") # fake data
+	gui = MainGui(root)#,"C:/Code/python/mdvj/v0.5.0/scrot") # fake data
 	root.mainloop()
 
 if __name__ == '__main__':
 	
-	Setup()
-	#
+	#Setup()
+	main()
 	#

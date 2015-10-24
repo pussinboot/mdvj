@@ -13,7 +13,9 @@ simple application that makes it easier to control milkdrop. supports any midi d
 3. `python ./setup.py install`
 4. to run execute: `mdvj`
 
-for use with resolume follow the instructions [here](https://github.com/pussinboot/mdvj/blob/master/resolume.md)
+-OR-
+
+download and extract the precompiled zip from [here](https://dl.dropboxusercontent.com/u/9812886/mdvj_v_0_5_0.zip)
 
 ## usage instructions
 
@@ -21,6 +23,8 @@ for use with resolume follow the instructions [here](https://github.com/pussinbo
 - once that's done, select your midi device, if none just press OK and close the next window
 - press midi button then click left of the description to set it
 - in main app, click on preset to activate or click on arrows to switch preset groups
+
+for use with resolume follow the instructions [here](https://github.com/pussinboot/mdvj/blob/master/resolume.md)
 
 ## to-do
 

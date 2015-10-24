@@ -9,13 +9,19 @@ class ConfigMidi:
 	configure midi controls
 	"""
 
-	def __init__(self):
-		self.master = tk.Tk()
-		self.master.wm_state('iconic')
+	def __init__(self,frame=None):
+		if not frame:
+			self.master = tk.Tk()
+			self.master.wm_state('iconic')
+		else:
+			self.master = frame
 		self.queue = None
 		self.midi_started = False
 		self.input_storage = None
+		#if not MC:
 		self.MC = MidiControl()
+		#else:
+		#	self.MC = MC
 		# tk stuff
 		self.nb = ttk.Notebook(self.master)
 		self.nb.pack()
@@ -77,9 +83,9 @@ class ConfigMidi:
 
 	def start(self):
 		# if no device
+		device_select = DeviceSelect(self)
+		#device_select.focus_force()
 		self.master.mainloop()
-		device_select = self.device_selection()
-		device_select.focus_force()
 		# now start the midi thread
 
 	def config_line(self,p_frame,desc,bind,ctype,type_restrict,radio=True): #,None] # need to pass in higher level variable fxns otherwise will have weird as behavior
@@ -121,62 +127,6 @@ class ConfigMidi:
 		topframe.pack()
 		label_1.bind('<ButtonPress>',lambda event, arg=desc: self.id_midi(arg))
 		return line_frame
-
-
-	def device_selection(self):
-		device_dict = self.MC.collect_device_info()
-		inputs = [key for key in device_dict[0]]
-		outputs = [key for key in device_dict[1]]
-		device_select = tk.Toplevel()
-		device_select.title('select midi devices')
-		#device_select.focus_force()
-
-		device_select_frame = tk.Frame(device_select)
-		ok_frame = tk.Frame(device_select)
-
-		input_label = tk.Label(device_select_frame,text='input')
-		output_label = tk.Label(device_select_frame,text='output')
-
-		input_choice = tk.StringVar()
-		input_choice.set('-')
-		output_choice = tk.StringVar()
-		output_choice.set('-')
-
-		input_select = tk.OptionMenu(device_select_frame,input_choice,*inputs)
-		output_select = tk.OptionMenu(device_select_frame,output_choice,*outputs)
-
-		def return_vals():
-			choices = [input_choice.get(),output_choice.get()]
-			tor = [None, None]
-			if choices[0] in inputs:
-				tor[0] = device_dict[0][choices[0]]			
-			if choices[1] in outputs:
-				tor[1] = device_dict[1][choices[1]]
-			device_select.destroy()
-			self.load(choices[0]+'.ini')
-			self.master.wm_state('normal')
-			self.input_storage = [choices[0], str(tor[0])]
-			self.MC.set_inp(tor[0])
-			self.midi_started = True
-			self.midi_thread = MidiClient(self,self.MC,250)
-			self.queue = self.midi_thread.queue
-			self.midi_thread.start()
-			self.master.update()
-			
-
-		device_select.protocol("WM_DELETE_WINDOW",return_vals)
-
-		ok_button = tk.Button(ok_frame,text='OK',command=return_vals)
-		ok_button.pack()
-
-		input_label.grid(row=0,column=0)
-		output_label.grid(row=0,column=1)
-		input_select.grid(row=1,column=0)
-		output_select.grid(row=1,column=1)
-
-		device_select_frame.pack()
-		ok_frame.pack()
-		return device_select
 
 	def set_queue(self,queue):
 		self.queue = queue
@@ -276,10 +226,66 @@ class ConfigMidi:
 	def quit(self):
 		self.save()
 		#self.master.destroy()
+class DeviceSelect:
+	def __init__(self,parent):
+		self.parent = parent
+		self.device_dict = self.parent.MC.collect_device_info()
+		self.inputs = [key for key in self.device_dict[0]]
+		self.outputs = [key for key in self.device_dict[1]]
+		self.device_select = tk.Toplevel(takefocus=True)
+		self.device_select.title('select midi devices')
+		#device_select.focus_force()
+
+		self.device_select_frame = tk.Frame(self.device_select)
+		self.ok_frame = tk.Frame(self.device_select)
+
+		self.input_label = tk.Label(self.device_select_frame,text='input')
+		self.output_label = tk.Label(self.device_select_frame,text='output')
+
+		self.input_choice = tk.StringVar()
+		self.input_choice.set('-')
+		self.output_choice = tk.StringVar()
+		self.output_choice.set('-')
+
+		self.input_select = tk.OptionMenu(self.device_select_frame,self.input_choice,*self.inputs)
+		self.output_select = tk.OptionMenu(self.device_select_frame,self.output_choice,*self.outputs)
+
+		self.device_select.protocol("WM_DELETE_WINDOW",self.return_vals)
+
+		self.ok_button = tk.Button(self.ok_frame,text='OK',command=self.return_vals)
+		self.ok_button.pack()
+
+		self.input_label.grid(row=0,column=0)
+		self.output_label.grid(row=0,column=1)
+		self.input_select.grid(row=1,column=0)
+		self.output_select.grid(row=1,column=1)
+
+		self.device_select_frame.pack()
+		self.ok_frame.pack()
+		self.device_select.mainloop()
+		#return device_select
+
+	def return_vals(self):
+		choices = [self.input_choice.get(),self.output_choice.get()]
+		tor = [None, None]
+		if choices[0] in self.inputs:
+			tor[0] = self.device_dict[0][choices[0]]			
+		if choices[1] in self.outputs:
+			tor[1] = self.device_dict[1][choices[1]]
+		self.device_select.destroy()
+		self.parent.load(choices[0]+'.ini')
+		self.parent.master.wm_state('normal')
+		self.parent.input_storage = [choices[0], str(tor[0])]
+		self.parent.MC.set_inp(tor[0])
+		self.parent.midi_started = True
+		self.parent.midi_thread = MidiClient(self.parent,self.parent.MC,250)
+		self.parent.queue = self.parent.midi_thread.queue
+		self.parent.midi_thread.start()
+		#self.parent.master.update()
 
 def main():
 	config = ConfigMidi()
-	return config.input_storage
+	#return config.input_storage
 
 
 if __name__ == '__main__':

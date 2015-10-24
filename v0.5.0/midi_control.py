@@ -20,6 +20,7 @@ class MidiControl:
 	def set_inp(self,inp=None):
 		if inp:
 			try:
+				# if self.inp: self.inp.close()
 				self.inp = pygame.midi.Input(inp)
 				return
 			except:
@@ -140,6 +141,18 @@ class MidiClient:
 	def endApplication(self):
 		self.running = 0
 		#self.pause()
+
+	def stop_midi(self):
+		self.pause()
+		self.running = False
+		self.MC.quit()
+		self.MC = None
+
+	def resume_midi(self,inp=None):
+		self.MC = MidiControl()
+		self.MC.set_inp(inp)
+		self.running = 1
+		self.resume()
 
 class GuiEx:
 

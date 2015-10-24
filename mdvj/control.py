@@ -1,7 +1,5 @@
-import pygame
 import pygame.midi
-from pygame.locals import *
-from mdvj.giantwin32 import * # keypressing stuff
+from giantwin32 import * # keypressing stuff
 import configparser
 
 class Controller():

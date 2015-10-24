@@ -309,6 +309,10 @@ class MainProgram:
 		#self.gui = MainGui(root,self,self.directory,self.input_name)
 
 def main():
+	mainp = MainProgram()
+	mainp.Save()
+
+def old_main():
 	root = tk.Tk()
 	root.title("mdvj")
 	root.resizable(0,0)
@@ -316,10 +320,9 @@ def main():
 	root.mainloop()
 
 if __name__ == '__main__':
+
+	main()
 	
-	mainp = MainProgram()
-	mainp.Save()
-	#main()
 	# make fake save
 	# to_save = {}
 	# with open("saved_state",'wb') as write:

@@ -2,7 +2,7 @@
 
 simple application that makes it easier to control milkdrop. supports any midi device or control with the mouse alone : ) 
 
-![preview](https://raw.githubusercontent.com/pussinboot/mdvj/master/v0.5.0/preview.PNG)
+![preview](https://raw.githubusercontent.com/pussinboot/mdvj/master/preview.PNG)
 
 ## installation instructions
 

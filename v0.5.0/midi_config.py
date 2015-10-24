@@ -9,10 +9,10 @@ class ConfigMidi:
 	configure midi controls
 	"""
 
-	def __init__(self,master):
-		self.master = master
+	def __init__(self):
+		self.master = tk.Tk()
+		self.master.wm_state('iconic')
 		self.queue = None
-		self.start_fun = lambda : None
 		self.midi_started = False
 		self.input_storage = None
 		self.MC = MidiControl()
@@ -77,6 +77,7 @@ class ConfigMidi:
 
 	def start(self):
 		# if no device
+		self.master.mainloop()
 		device_select = self.device_selection()
 		device_select.focus_force()
 		# now start the midi thread
@@ -277,10 +278,7 @@ class ConfigMidi:
 		#self.master.destroy()
 
 def main():
-	root = tk.Tk()
-	root.wm_state('iconic')
-	config = ConfigMidi(root)
-	root.mainloop()
+	config = ConfigMidi()
 	return config.input_storage
 
 

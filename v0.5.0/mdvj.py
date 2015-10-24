@@ -7,7 +7,7 @@ from PIL import ImageTk,Image
 from db import Database
 from control_md import Controller
 from screenshot import Screenshot
-import midi_config
+from midi_config import ConfigMidi
 
 class MainGui:
 	""" the main gui """
@@ -233,12 +233,13 @@ class MainProgram:
 		if not self.savedata:
 			s = Screenshot()
 			self.directory = s.start()
-			input_store = midi_config.main() # needs rewrite to follow the use queue to update gui standard
+			mc = ConfigMidi()
+			input_store = mc.input_storage # needs rewrite to follow the use queue to update gui standard
 			if input_store:
 				self.input_name = input_store[0]
 		else:
 			self.directory = self.savedata['directory']
-			if not self.input_name: self.input_name = self.savedata['last_device']
+			#if not self.input_name: self.input_name = self.savedata['last_device']
 			#s = Screenshot()
 			#directory = s.start()
 			#print(directory)
@@ -276,6 +277,7 @@ class MainProgram:
 	def re_screenshot(self):
 		self.gui.control.close()
 		self.gui = None
+		self.root = None
 		s = Screenshot(first_time=False)
 		self.directory = s.start()
 		self.gui = MainGui(root,self,self.directory,self.input_name)
@@ -283,7 +285,10 @@ class MainProgram:
 	def re_configure(self):
 		self.gui.control.close()
 		self.gui = None
-		input_store = midi_config.main()
+		self.root = None
+		mc = ConfigMidi()
+		mc.start()
+		input_store = mc.input_storage
 		if input_store: self.input_name = input_store[0]
 		self.gui = MainGui(root,self,self.directory,self.input_name)
 

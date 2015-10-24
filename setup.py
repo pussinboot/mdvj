@@ -11,7 +11,7 @@ else:
     pywin32_whl = "https://pypi.python.org/packages/cp34/p/pypiwin32/pypiwin32-219-cp34-none-win32.whl"
 setup(
     name='mdvj',
-    version='0.0.3',
+    version='0.5.0',
 
     description='Milkdrop DJ Tool',
     long_description="""
@@ -24,20 +24,19 @@ for use with novation twitch controller
     packages=['mdvj'],
 
     install_requires=[
-        "Pillow"
+        "Pillow",
+        "pywin32",
+        "pygame"
     ],
 
     dependency_links=[
         pygame_whl,
         pywin32_whl
     ],
-    package_data={
-        'mdvj' : ['ProggyTinySZ.ttf']
-    },
 
     entry_points = {
             'console_scripts': [
-                'mdvj = mdvj:main'
+                'mdvj = mdvj.mdvj:main'
             ]
         }
 )

@@ -113,7 +113,8 @@ class MidiClient:
 			self.MC.quit()
 			self.gui.quit()
 			self.gui.master.destroy()
-		self.run_periodic = self.gui.master.after(self.refresh_int, self.periodicCall)
+		else:
+			self.run_periodic = self.gui.master.after(self.refresh_int, self.periodicCall)
 
 	def pause(self):
 		if self.run_periodic:
@@ -138,6 +139,7 @@ class MidiClient:
 
 	def endApplication(self):
 		self.running = 0
+		#self.pause()
 
 class GuiEx:
 

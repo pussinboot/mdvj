@@ -16,11 +16,15 @@ import configparser
 #from ctypes import windll
 
 class Screenshot():
-	def __init__(self,debug=False):
+	def __init__(self,debug=False,first_time=True):
 		self.root = tk.Tk()
-		self.root.withdraw()
+		self.root.wm_state('iconic')
 		if not debug:
-			tkmessagebox.showinfo("welcome","looks like this is your first time running mdvj.\nto begin you must construct the database of presets\n\nmake sure to open winamp and start milkdrop before clicking OK")
+			if first_time:
+				welcome_msg = "looks like this is your first time running mdvj.\nto begin you must construct the database of presets\n\nmake sure to open winamp and start milkdrop before clicking OK"
+			else:
+				welcome_msg = "let's construct the database of presets\n\nmake sure to open winamp and start milkdrop before clicking OK"
+			tkmessagebox.showinfo("welcome",welcome_msg)
 			while not self.check_win('MilkDrop 2'):
 				tkmessagebox.showwarning(":(","milkdrop isnt running")
 			self.t = tkfiledialog.askdirectory(title='select your milkdrop presets folder',initialdir="C:/Program Files (x86)/Winamp/plugins/milkdrop2/presets",mustexist=True)
@@ -33,7 +37,7 @@ class Screenshot():
 		self.file_list = glob.glob(self.t + "/*.milk")
 		self.i = 0
 		#self.data = {}
-		self.start()
+		#self.start()
 
 	def start(self):
 		tkmessagebox.showinfo("get ready", "we're going to take screenshots of each preset now\n\nbefore you start make sure\n\t1. milkdrop is still open\n\t2. you've selected the 1st preset\n\t3. milkdrop is in sequential mode [r]\n\t4. the current preset is locked [ScrLock]\n\t5. you're playing a cool song")
@@ -48,6 +52,7 @@ class Screenshot():
 		#ScrotPicker(self,"scrot" + self.file_list[self.i][self.tl:-5] + '.png')
 		self.advance()
 		self.root.mainloop()
+		return self.t
 
 	def advance(self):
 
@@ -166,6 +171,7 @@ class ScrotDisp:
 
 if __name__=='__main__':
 	s = Screenshot(True)
+	s.start()
 	#pick_test = ScrotPicker("scrot/test.png")
 	#s.alt_tab()
 	#s.start()

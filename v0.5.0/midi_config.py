@@ -281,6 +281,7 @@ def main():
 	root.wm_state('iconic')
 	config = ConfigMidi(root)
 	root.mainloop()
+	return config.input_storage
 
 
 if __name__ == '__main__':

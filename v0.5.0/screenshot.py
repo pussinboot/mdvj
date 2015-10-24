@@ -150,7 +150,8 @@ class ScrotPicker:
 		self.parent.advance()
 
 	def pick_new(self):
-		self.parent.next_preset()
+		#self.parent.next_preset()
+		self.root.destroy()
 		self.parent.advance()
 
 class ScrotDisp:

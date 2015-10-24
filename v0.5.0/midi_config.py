@@ -18,10 +18,6 @@ class ConfigMidi:
 		self.queue = None
 		self.midi_started = False
 		self.input_storage = None
-		#if not MC:
-		self.MC = MidiControl()
-		#else:
-		#	self.MC = MC
 		# tk stuff
 		self.nb = ttk.Notebook(self.master)
 		self.nb.pack()
@@ -54,6 +50,8 @@ class ConfigMidi:
 		self.c_page = self.nb_page(ckeys)
 		self.nb.add(self.c_page,text='preset control')
 		
+
+		self.MC = MidiControl()
 		self.start()
 		# first popup with selection of inputs
 		# and outputs as well
@@ -278,7 +276,7 @@ class DeviceSelect:
 		self.parent.input_storage = [choices[0], str(tor[0])]
 		self.parent.MC.set_inp(tor[0])
 		self.parent.midi_started = True
-		self.parent.midi_thread = MidiClient(self.parent,self.parent.MC,250)
+		self.parent.midi_thread = MidiClient(self.parent,self.parent.MC,100)
 		self.parent.queue = self.parent.midi_thread.queue
 		self.parent.midi_thread.start()
 		#self.parent.master.update()

@@ -17,6 +17,7 @@ class MainGui:
 		# load saved directory, if no saved dir then run first setup (screenshot then control)
 		# add menu to configure input or reselect db
 		self.mainprogram = mainprogram
+		self.mainprogram.do_something = None
 		self.db = Database(path) # will update later to select your folder first
 		self.db.start()
 		starting_len = len(self.db)
@@ -224,31 +225,36 @@ class MainProgram:
 		self.savedata = self.Load()
 		self.input_name = None
 		self.directory = None
-
+		self.do_something = None
 		self.Setup()
-			
-	def Setup(self):
-		""" loads config if exists, otherwise guides you through setup process"""
-		
-		if not self.savedata:
-			s = Screenshot()
-			self.directory = s.start()
-			mc = ConfigMidi()
-			input_store = mc.input_storage # needs rewrite to follow the use queue to update gui standard
-			if input_store:
-				self.input_name = input_store[0]
-		else:
-			self.directory = self.savedata['directory']
-			#if not self.input_name: self.input_name = self.savedata['last_device']
-			#s = Screenshot()
-			#directory = s.start()
-			#print(directory)
-			#ConfigMidi(tk.Toplevel())
+		while self.do_something:
+			self.do_something()
+			self.Run()
+	
+	def Run(self):
 		self.root = tk.Tk()
 		self.root.title('mdvj')
 		self.root.resizable(0,0)	
 		self.gui = MainGui(self.root,self,self.directory,self.input_name)
 		self.root.mainloop()
+
+	def Setup(self):
+		""" loads config if exists, otherwise guides you through setup process"""
+		
+		if not self.savedata:
+			#s = Screenshot()
+			#self.directory = s.start()
+			self.do_screenshot()
+			self.do_config()
+			
+		else:
+			self.directory = self.savedata['directory']
+			if not self.input_name: self.input_name = self.savedata['last_device']
+			#s = Screenshot()
+			#directory = s.start()
+			#print(directory)
+			#ConfigMidi(tk.Toplevel())
+			self.Run()
 
 	def Load(self,filename="saved_state"):
 			if os.path.exists(filename):
@@ -274,23 +280,33 @@ class MainProgram:
 			with open(filename,'wb') as write:
 				pickle.dump(to_save,write)
 
-	def re_screenshot(self):
-		self.gui.control.close()
-		self.gui = None
-		self.root = None
-		s = Screenshot(first_time=False)
+	def do_screenshot(self,first_time=True):
+		s = Screenshot(first_time)
 		self.directory = s.start()
-		self.gui = MainGui(root,self,self.directory,self.input_name)
+
+	def re_screenshot(self):
+		self.do_something = lambda : self.do_screenshot(False)
+		self.gui.control.MC.endApplication()
+		#self.gui = None
+		#self.root = None
+
+		#self.gui = MainGui(root,self,self.directory,self.input_name)
+	def do_config(self):
+		mc = ConfigMidi()
+		input_store = mc.input_storage # needs rewrite to follow the use queue to update gui standard
+		if input_store:
+			self.input_name = input_store[0]
 
 	def re_configure(self):
-		self.gui.control.close()
-		self.gui = None
-		self.root = None
-		mc = ConfigMidi()
-		mc.start()
-		input_store = mc.input_storage
-		if input_store: self.input_name = input_store[0]
-		self.gui = MainGui(root,self,self.directory,self.input_name)
+		#self.gui.control.MC.stop_midi()#close()
+		self.do_something = self.do_config
+		self.gui.control.MC.endApplication()
+		
+		#	self.input_name = input_store[0]
+		#	self.gui.control.MC.set_inp(input_store[1])
+		#self.gui.contol.MC.resume()
+
+		#self.gui = MainGui(root,self,self.directory,self.input_name)
 
 def main():
 	root = tk.Tk()

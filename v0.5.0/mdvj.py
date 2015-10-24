@@ -1,7 +1,7 @@
 import tkinter as tk
 import tkinter.messagebox as tkmessagebox
 
-import os, queue, pickle
+import os, queue, pickle, time, sys
 from PIL import ImageTk,Image
 
 from db import Database
@@ -12,12 +12,11 @@ import midi_config
 class MainGui:
 	""" the main gui """
 
-	def __init__(self,root,path="C:/Program Files (x86)/Winamp/plugins/milkdrop2/presets",midi_save=None):
+	def __init__(self,root,mainprogram=None,path="C:/Program Files (x86)/Winamp/plugins/milkdrop2/presets",midi_save=None):
 		# mdvj stuff
 		# load saved directory, if no saved dir then run first setup (screenshot then control)
 		# add menu to configure input or reselect db
-		self.path = path
-		self.midi_save = midi_save
+		self.mainprogram = mainprogram
 		self.db = Database(path) # will update later to select your folder first
 		self.db.start()
 		starting_len = len(self.db)
@@ -56,22 +55,12 @@ class MainGui:
 		self.controlframe.pack()
 		self.frame.pack()
 
-		self.setup_menubar()
+		if self.mainprogram: self.setup_menubar()
 
 		self.control = Controller(self)
 		if midi_save: midi_save = midi_save + '.ini'
 		inp = self.control.load(midi_save) 
 		self.control.midi_start(inp)
-
-	def re_screenshot(self):
-		s = Screenshot(first_time=False)
-		self.path = s.start()
-
-	def re_configure(self):
-		# quit
-		self.control.MC.running = False
-		input_store = midi_config.main()
-		Setup(input_store[0])
 
 	def set_queue(self,queue):
 			self.queue = queue
@@ -131,14 +120,13 @@ class MainGui:
 
 	def quit(self):
 		#self.root.destroy()
-		savedata = {'directory':self.path,'last_device':self.midi_save}
-		Save(savedata)
+		pass
 
 	def setup_menubar(self):
 		self.menubar = tk.Menu(self.root)
 		self.filemenu = tk.Menu(self.menubar,tearoff=0)
-		self.filemenu.add_command(label="retake screenshots",command=self.re_screenshot)
-		self.filemenu.add_command(label="reconfig midi",command=self.re_configure)
+		self.filemenu.add_command(label="retake screenshots",command=self.mainprogram.re_screenshot)
+		self.filemenu.add_command(label="reconfig midi",command=self.mainprogram.re_configure)
 		self.menubar.add_cascade(label='settings',menu=self.filemenu)
 
 		self.root.config(menu=self.menubar)
@@ -229,52 +217,75 @@ class PresetContainer:
 
 	def deselected(self):
 		self.label.config(relief=tk.FLAT)
+
+class MainProgram:
+
+	def __init__(self):
+		self.savedata = self.Load()
+		self.input_name = None
+		self.directory = None
+
+		self.Setup()
+			
+	def Setup(self):
+		""" loads config if exists, otherwise guides you through setup process"""
 		
-def Setup(input_name=None):
-	""" loads config if exists, otherwise guides you through setup process"""
-
-	savedata = Load()
-	
-	if not savedata:
-		s = Screenshot()
-		directory = s.start()
-		input_store = midi_config.main() # needs rewrite to follow the use queue to update gui standard
-		if input_store:
-			input_name = input_store[0]
-	else:
-		directory = savedata['directory']
-		if not input_name: input_name = savedata['last_device']
-		#s = Screenshot()
-		#directory = s.start()
-		#print(directory)
-		#ConfigMidi(tk.Toplevel())
-	root = tk.Tk()
-	root.title('mdvj')
-	root.resizable(0,0)	
-	gui = MainGui(root,directory,input_name)
-	root.mainloop()
-
-def Load(filename="saved_state"):
-		if os.path.exists(filename):
-			with open(filename,'rb') as read:
-				try:
-					pickle_d = pickle.load(read)
-					return pickle_d
-				except:
-					if debug: print('error reading',filename)
-					read.close()
-					os.remove(filename)
+		if not self.savedata:
+			s = Screenshot()
+			self.directory = s.start()
+			input_store = midi_config.main() # needs rewrite to follow the use queue to update gui standard
+			if input_store:
+				self.input_name = input_store[0]
 		else:
-			print("no saved state")
+			self.directory = self.savedata['directory']
+			if not self.input_name: self.input_name = self.savedata['last_device']
+			#s = Screenshot()
+			#directory = s.start()
+			#print(directory)
+			#ConfigMidi(tk.Toplevel())
+		self.root = tk.Tk()
+		self.root.title('mdvj')
+		self.root.resizable(0,0)	
+		self.gui = MainGui(self.root,self,self.directory,self.input_name)
+		self.root.mainloop()
 
-def Save(to_save=None,filename="saved_state"):
-	"""
-	save a dictionary to pickle
-	"""
-	if not to_save:
-		return
-	with open(filename,'wb') as write:
-		pickle.dump(to_save,write)
+	def Load(self,filename="saved_state"):
+			if os.path.exists(filename):
+				with open(filename,'rb') as read:
+					try:
+						pickle_d = pickle.load(read)
+						return pickle_d
+					except:
+						print('error reading',filename)
+						read.close()
+						os.remove(filename)
+			else:
+				print("no saved state")
+
+	def Save(self,filename="saved_state"):
+		"""
+		save a dictionary to pickle
+		"""
+		to_save = {}
+		if self.directory: to_save['directory'] = self.directory
+		if self.input_name: to_save['last_device'] = self.input_name
+		if to_save != {}:
+			with open(filename,'wb') as write:
+				pickle.dump(to_save,write)
+
+	def re_screenshot(self):
+		self.gui.control.close()
+		self.gui = None
+		s = Screenshot(first_time=False)
+		self.directory = s.start()
+		self.gui = MainGui(root,self,self.directory,self.input_name)
+
+	def re_configure(self):
+		self.gui.control.close()
+		self.gui = None
+		input_store = midi_config.main()
+		if input_store: self.input_name = input_store[0]
+		self.gui = MainGui(root,self,self.directory,self.input_name)
 
 def main():
 	root = tk.Tk()
@@ -285,6 +296,10 @@ def main():
 
 if __name__ == '__main__':
 	
-	#Setup()
-	main()
-	#
+	mainp = MainProgram()
+	mainp.Save()
+	#main()
+	# make fake save
+	# to_save = {}
+	# with open("saved_state",'wb') as write:
+	# 	pickle.dump(to_save,write)

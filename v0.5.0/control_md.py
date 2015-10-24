@@ -211,6 +211,9 @@ class Controller():
 			# print(self.key_to_fun)
 			return int(Config.get('IO','Input ID'))
 
+	def close(self):
+		self.MC.endApplication()
+
 
 #if __name__ == '__main__':
 #	Config = configparser.RawConfigParser()

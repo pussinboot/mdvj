@@ -6,15 +6,21 @@ pass it to new ThreadedClient object
 then can run .start()
 then can do mainloop or whatever else
 """
-
-import pygame.midi
+try:
+	import pygame.midi
+	midi_loaded = True
+except:	
+	print('pygame midi not installed')
+	midi_loaded = False
 
 import threading
 import queue
 
 class MidiControl:
 	def __init__(self):
-		pygame.midi.init()
+		global midi_loaded
+		if midi_loaded:
+			pygame.midi.init()
 		self.inp = None #pygame.midi.Input(pygame.midi.get_default_input_id())
 
 	def set_inp(self,inp=None):
@@ -25,9 +31,15 @@ class MidiControl:
 				return
 			except:
 				pass
-		self.inp = pygame.midi.Input(pygame.midi.get_default_input_id())
+		try:
+			self.inp = pygame.midi.Input(pygame.midi.get_default_input_id())
+		except:
+			self.inp = None
 
 	def collect_device_info(self): # using this can construct list of inputs/outputs and have their corresponding channels
+		global midi_loaded
+		if not midi_loaded:
+			return [{},{}]
 		inputs = {}
 		outputs = {}
 		i = res = 0
@@ -44,6 +56,9 @@ class MidiControl:
 
 	def quit(self):
 		# self.out.close()
+		global midi_loaded
+		if not midi_loaded:
+			return
 		try:
 			self.inp.close()
 			pygame.midi.quit()
@@ -132,11 +147,12 @@ class MidiClient:
 		One important thing to remember is that the thread has to yield
 		control.
 		"""
-		while self.running:
-			
-			msg = self.MC.test_inp()
-			if msg:
-				queue.put(msg)
+		if self.MC.inp:
+			while self.running:
+				
+				msg = self.MC.test_inp()
+				if msg:
+					queue.put(msg)
 
 	def endApplication(self):
 		self.running = 0

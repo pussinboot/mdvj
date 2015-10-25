@@ -270,6 +270,7 @@ class MainProgram:
 			#directory = s.start()
 			#print(directory)
 			#ConfigMidi(tk.Toplevel())
+		self.Save()
 		self.Run()
 
 	def Load(self,filename="saved_state"):

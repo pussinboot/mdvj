@@ -18,6 +18,7 @@ class ConfigMidi:
 			self.master.wm_state('iconic')
 		else:
 			self.master = frame
+		self.no_midi = False
 		self.queue = None
 		self.midi_started = False
 		self.input_storage = None
@@ -86,7 +87,8 @@ class ConfigMidi:
 		# if no device
 		device_select = DeviceSelect(self)
 		#device_select.focus_force()
-		self.master.mainloop()
+		if not self.no_midi:
+			self.master.mainloop()
 		# now start the midi thread
 
 	def config_line(self,p_frame,desc,bind,ctype,type_restrict,radio=True): #,None] # need to pass in higher level variable fxns otherwise will have weird as behavior
@@ -250,7 +252,8 @@ class DeviceSelect:
 
 		if self.inputs == []:
 			self.return_vals()
-
+			parent.no_midi = True
+			return
 		self.input_select = tk.OptionMenu(self.device_select_frame,self.input_choice,*self.inputs)
 		self.output_select = tk.OptionMenu(self.device_select_frame,self.output_choice,*self.outputs)
 

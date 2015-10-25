@@ -248,6 +248,9 @@ class DeviceSelect:
 		self.output_choice = tk.StringVar()
 		self.output_choice.set('-')
 
+		if self.inputs == []:
+			self.return_vals()
+
 		self.input_select = tk.OptionMenu(self.device_select_frame,self.input_choice,*self.inputs)
 		self.output_select = tk.OptionMenu(self.device_select_frame,self.output_choice,*self.outputs)
 

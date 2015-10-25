@@ -11,16 +11,14 @@ else:
     pywin32_whl = "https://pypi.python.org/packages/cp34/p/pypiwin32/pypiwin32-219-cp34-none-win32.whl"
 setup(
     name='mdvj',
-    version='0.5.0',
-
-    description='Milkdrop DJ Tool',
+    version='0.5.1',
+    description='Milkdrop VJ Tool',
     long_description="""
 mdvj - milkdrop vj midi controller
-for use with novation twitch controller
 """,
     url='https://github.com/pussinboot/mdvj',
 
-    keywords='vj midi novation',
+    keywords='vj midi',
     packages=['mdvj'],
 
     install_requires=[
@@ -33,7 +31,9 @@ for use with novation twitch controller
         pygame_whl,
         pywin32_whl
     ],
-
+    package_data={
+            'mdvj' : ['error_scrot.bmp']
+            },
     entry_points = {
             'console_scripts': [
                 'mdvj = mdvj.mdvj:main'

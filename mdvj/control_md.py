@@ -100,8 +100,9 @@ class Controller():
 
 	def select_pad(self,lr,padno):
 		pc = self.get_pad_container(lr,padno)
-		self.mdc.select_preset(pc.preset)
-		self.gui.queue.put(['pad',[lr, padno]])
+		if pc:
+			self.mdc.select_preset(pc.preset)
+			self.gui.queue.put(['pad',[lr, padno]])
 
 	def select_pad_gui(self,lr,padno):
 		if self.last_pad and self.last_pad != [lr, padno]: # deselect (in gui) last pad

@@ -76,13 +76,14 @@ class Controller():
 		if inp:
 			self.MC.MC.set_inp(inp)
 			def process_midi(queue):
-				while self.MC.running:
-					msg = self.MC.MC.test_inp()
-					if msg:
-						#queue.put(mg)
-						if msg[0] in self.key_to_fun:
-							resp = self.key_to_fun[msg[0]](msg[1])
-							if resp: queue.put(resp)
+				if self.MC.MC.inp:
+					while self.MC.running:
+						msg = self.MC.MC.test_inp()
+						if msg:
+							#queue.put(mg)
+							if msg[0] in self.key_to_fun:
+								resp = self.key_to_fun[msg[0]](msg[1])
+								if resp: queue.put(resp)
 
 			self.MC.start(process_midi)
 		else:

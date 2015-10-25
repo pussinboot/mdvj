@@ -1,4 +1,4 @@
-### mdvj v0.5.0 - milkdrop vj midi controller :notes:
+### mdvj v0.5.1 - milkdrop vj midi controller :notes:
 
 simple application that makes it easier to control milkdrop. supports any midi device or control with the mouse alone : ) 
 
@@ -7,15 +7,15 @@ simple application that makes it easier to control milkdrop. supports any midi d
 ## installation instructions
 
 1. make sure you have the dependencies fulfilled
-	- pygame32 from [here](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pygame)
 	- pywin32 from [here](http://sourceforge.net/projects/pywin32/)
+	- pygame32 from [here](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pygame) (only if you plan on using midi)
 2. clone this repo
 3. `python ./setup.py install`
 4. to run execute: `mdvj`
 
 -OR-
 
-download and extract the precompiled zip from [here](https://dl.dropboxusercontent.com/u/9812886/mdvj_v_0_5_0.zip)
+download and extract the precompiled zip from [here](https://dl.dropboxusercontent.com/u/9812886/mdvj_v_0_5_1.zip)
 
 ## usage instructions
 
@@ -25,6 +25,13 @@ download and extract the precompiled zip from [here](https://dl.dropboxuserconte
 - in main app, click on preset to activate or click on arrows to switch preset groups
 
 for use with resolume follow the instructions [here](https://github.com/pussinboot/mdvj/blob/master/resolume.md)
+
+## known bugs
+
+milkdrop uses a funny sorting algorithm for determining order of presets so the name of a preset will not always match up with what you select.
+no worries, the screenshot is still correct.. if this bothers you, you can rename your presets so that milkdrop follows the same order as your file explorer.
+
+if after setup everything closes, just start mdvj again and it will work (this will happen if you have no midi devices sorry)
 
 ## to-do
 

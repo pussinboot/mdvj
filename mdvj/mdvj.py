@@ -37,11 +37,18 @@ class MainGui:
 		
 		#self.padgroup_l_n = -1
 		#self.padgroup_r_n = -1
-		#if starting_len > 1:
-		self.padgroup_l_n = 0
-		self.padgroup_r_n = 1
-		self.padgroup_l = SuperPadGroup(self,0)#,self.db[0])
-		self.padgroup_r = SuperPadGroup(self,1)#,self.db[1])
+		if starting_len > 1:
+			self.padgroup_l_n = 0
+			self.padgroup_r_n = 1
+			self.padgroup_l = SuperPadGroup(self,0)#,self.db[0])
+			self.padgroup_r = SuperPadGroup(self,1)#,self.db[1])
+			self.padgroups = [self.padgroup_l,self.padgroup_r]
+
+		else:
+			self.padgroup_l_n = 0
+			self.padgroup_r_n = 0
+			self.padgroup_l = SuperPadGroup(self,0)#,self.db[0])
+			self.padgroups = [self.padgroup_l,self.padgroup_l]
 		#else:
 		#	if starting_len > 0:
 		#		self.padgroup_l_n = 0
@@ -49,7 +56,6 @@ class MainGui:
 		#	else:
 		#		self.padgroup_l = SuperPadGroup(self,0)
 		#	self.padgroup_r = SuperPadGroup(self,1)
-		self.padgroups = [self.padgroup_l,self.padgroup_r]
 
 
 		self.controlframe = tk.Frame(self.frame)
@@ -155,6 +161,7 @@ class SuperPadGroup:
 		self.show_group(self.current_group)
 
 	def show_group(self,groupno):
+		#if groupno < len(self.padgroup_cont):
 		self.current_group = groupno
 		cgroup = self.padgroup_cont[groupno]
 		cgroup.frame.tkraise()
@@ -201,7 +208,10 @@ class PresetContainer:
 		self.padgroup = padgroup
 		self.preset = preset
 		self.coords = [lr,padno]
-		self.img = Image.open(self.preset.img)
+		try:
+			self.img = Image.open(self.preset.img)
+		except:
+			self.img = Image.open("error_scrot.bmp")
 		self.img = self.img.resize((150, 150), Image.ANTIALIAS)
 		self.img = ImageTk.PhotoImage(self.img)
 		self.label = tk.Label(self.padgroup.frame,image=self.img,text="",compound='top',width=150,bd=5) 

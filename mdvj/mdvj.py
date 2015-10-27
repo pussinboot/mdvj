@@ -9,11 +9,13 @@ try:
 	from mdvj.control_md import Controller
 	from mdvj.screenshot import Screenshot
 	from mdvj.midi_config import ConfigMidi
+	from mdvj.log import LogGui
 except: # testing
 	from db import Database
 	from control_md import Controller
 	from screenshot import Screenshot
 	from midi_config import ConfigMidi
+	from log import LogGui
 
 class MainGui:
 	""" the main gui """
@@ -24,6 +26,9 @@ class MainGui:
 		# add menu to configure input or reselect db
 		self.mainprogram = mainprogram
 		self.mainprogram.do_something = None
+
+		self.event_queue = queue.Queue()
+
 		self.db = Database(path) # will update later to select your folder first
 		self.db.start()
 		starting_len = len(self.db)
@@ -35,28 +40,19 @@ class MainGui:
 
 		self.queue = None
 		
-		#self.padgroup_l_n = -1
-		#self.padgroup_r_n = -1
 		if starting_len > 1:
 			self.padgroup_l_n = 0
 			self.padgroup_r_n = 1
-			self.padgroup_l = SuperPadGroup(self,0)#,self.db[0])
-			self.padgroup_r = SuperPadGroup(self,1)#,self.db[1])
+			self.padgroup_l = SuperPadGroup(self,0)
+			self.padgroup_r = SuperPadGroup(self,1)
 			self.padgroups = [self.padgroup_l,self.padgroup_r]
 
 		else:
 			self.padgroup_l_n = 0
 			self.padgroup_r_n = 0
-			self.padgroup_l = SuperPadGroup(self,0)#,self.db[0])
+			self.padgroup_l = SuperPadGroup(self,0)
 			self.padgroups = [self.padgroup_l,self.padgroup_l]
-		#else:
-		#	if starting_len > 0:
-		#		self.padgroup_l_n = 0
-		#		self.padgroup_l = SuperPadGroup(self,0)#,self.db[0])
-		#	else:
-		#		self.padgroup_l = SuperPadGroup(self,0)
-		#	self.padgroup_r = SuperPadGroup(self,1)
-
+		
 
 		self.controlframe = tk.Frame(self.frame)
 		self.prev_col_button = tk.Button(self.controlframe,text="<",command=lambda: self.control.go_lr(0),pady=0)
@@ -161,7 +157,6 @@ class SuperPadGroup:
 		self.show_group(self.current_group)
 
 	def show_group(self,groupno):
-		#if groupno < len(self.padgroup_cont):
 		self.current_group = groupno
 		cgroup = self.padgroup_cont[groupno]
 		cgroup.frame.tkraise()
@@ -178,10 +173,9 @@ class PadGroup:
 		self.preset_containers = [None]*8
 		self.max_len = len(presets)
 		self.lr = lr
-		self.frame = tk.Frame(parent.frame)#,borderwidth=5,relief=tk.RIDGE)
-		self.frame.grid(row=0, column=0, sticky='news')#pack(side=tk.LEFT, fill="both", expand=True) #pack(side=tk.LEFT)
-		#self.frame.grid_rowconfigure(0, weight=1)
-		#self.frame.grid_columnconfigure(0, weight=1) 
+		self.frame = tk.Frame(parent.frame)
+		self.frame.grid(row=0, column=0, sticky='news')
+
 		if presets:
 			self.init_containers(presets)
 
@@ -194,7 +188,6 @@ class PadGroup:
 				#print(self.db[r][c])
 				self.preset_containers[i] = PresetContainer(self,presets[i],self.lr,i)
 				self.preset_containers[i].grid(row=r,column=c)
-				#self.parent.root.update_idletasks()
 
 	def deselect_all(self):
 		for i in range(self.max_len):
@@ -225,9 +218,8 @@ class PresetContainer:
 		self.label.config(text=new_text)
 
 	def select(self,event=None):
+		self.padgroup.parent.parent.event_queue.put(self.coords)
 		self.padgroup.parent.parent.control.select_pad(*self.coords)
-		#self.padgroup.parent.control.select_pad_gui(*self.coords)
-		#self.selected()
 
 	def selected(self):
 		self.label.config(relief=tk.SUNKEN)
@@ -237,12 +229,16 @@ class PresetContainer:
 
 class MainProgram:
 
-	def __init__(self):
+	def __init__(self,debug=False):
 		self.savedata = self.Load()
 		self.input_name = None
 		self.directory = None
 		self.do_something = None
-		self.Setup()
+		if debug:
+			self.directory = "C:/Code/python/mdvj/mdvj/scrot"
+			self.Run()
+		else:
+			self.Setup()
 		while self.do_something:
 			self.do_something()
 			self.Run()
@@ -252,24 +248,22 @@ class MainProgram:
 		self.root.title('mdvj')
 		self.root.resizable(0,0)	
 		self.gui = MainGui(self.root,self,self.directory,self.input_name)
+		self.log = LogGui(self.root)
+		self.log.set_queue(self.gui.event_queue)
+		self.log.start()
 		self.root.mainloop()
 
 	def Setup(self):
 		""" loads config if exists, otherwise guides you through setup process"""
 		
 		if not self.savedata:
-			#s = Screenshot()
-			#self.directory = s.start()
 			self.do_screenshot()
 			self.do_config()
 			
 		else:
 			self.directory = self.savedata['directory']
 			if not self.input_name: self.input_name = self.savedata['last_device']
-			#s = Screenshot()
-			#directory = s.start()
-			#print(directory)
-			#ConfigMidi(tk.Toplevel())
+			
 		self.Save()
 		self.Run()
 
@@ -304,10 +298,7 @@ class MainProgram:
 	def re_screenshot(self):
 		self.do_something = lambda : self.do_screenshot(False)
 		self.gui.control.MC.endApplication()
-		#self.gui = None
-		#self.root = None
 
-		#self.gui = MainGui(root,self,self.directory,self.input_name)
 	def do_config(self):
 		mc = ConfigMidi()
 		input_store = mc.input_storage # needs rewrite to follow the use queue to update gui standard
@@ -315,26 +306,13 @@ class MainProgram:
 			self.input_name = input_store[0]
 
 	def re_configure(self):
-		#self.gui.control.MC.stop_midi()#close()
 		self.do_something = self.do_config
 		self.gui.control.MC.endApplication()
 		
-		#	self.input_name = input_store[0]
-		#	self.gui.control.MC.set_inp(input_store[1])
-		#self.gui.contol.MC.resume()
-
-		#self.gui = MainGui(root,self,self.directory,self.input_name)
 
 def main():
-	mainp = MainProgram()
+	mainp = MainProgram(debug=True)
 	mainp.Save()
-
-def old_main():
-	root = tk.Tk()
-	root.title("mdvj")
-	root.resizable(0,0)
-	gui = MainGui(root)#,"C:/Code/python/mdvj/v0.5.0/scrot") # fake data
-	root.mainloop()
 
 if __name__ == '__main__':
 

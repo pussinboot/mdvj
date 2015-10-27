@@ -5,6 +5,7 @@ hope is to be able to play back again with or without rearranging
 import threading, time
 import tkinter as tk
 from tkinter import ttk
+import queue
 
 class PresetLog:
 	"""
@@ -98,8 +99,13 @@ class LogGui:
 	can be double clicked to change time interval 
 	multiple logs 4 multiple recordings, idk
 	"""
-	def __init__(self,master):
+	def __init__(self,master=None):
 		self.master = master
+		self.queue = None
+		self.running = 0
+		if not master:
+			self.master = tk.Tk()
+			self.master.wm_state('iconic')
 		self.logs = [PresetLog()]
 		self.current_log_index = 0
 		# gui whatever
@@ -124,11 +130,42 @@ class LogGui:
 		self.treeframe.pack()
 		self.mainframe.pack()
 
+	def set_queue(self,queue):
+		self.queue = queue
+
+	def start(self):
+		if self.queue:
+			self.running = 1
+			self.periodicCall()
+		self.master.mainloop()
+
+	def periodicCall(self):
+		self.processIncoming()
+		if not self.running:
+			self.master.after_cancel(self.processIncoming)
+		else:
+			self.master.after(100,self.periodicCall)
+
+	def processIncoming(self):
+		"""
+		Handle all the messages currently in the queue (if any).
+		"""
+		while self.queue.qsize():
+			try:
+				msg = self.queue.get(0)
+				# Check contents of message and do what it says
+				# As a test, we simply print it
+				print( msg)
+			except queue.Empty:
+				pass
+
+
 def main():
-	root = tk.Tk()
-	root.wm_state('iconic')
-	loggui = LogGui(root)
-	root.mainloop()
+	# root = tk.Tk()
+	# root.wm_state('iconic')
+	loggui = LogGui()
+	loggui.start()
+	#root.mainloop()
 
 if __name__ == '__main__':
 	# test

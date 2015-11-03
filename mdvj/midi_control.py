@@ -15,6 +15,7 @@ except:
 
 import threading
 import queue
+import time
 
 class MidiControl:
 	def __init__(self):
@@ -97,6 +98,7 @@ class MidiClient:
 		# Set up the GUI part
 		self.gui = gui # setup elsewhere, needs to have a set_queue fxn and a processIncoming fxn
 		self.gui.set_queue(self.queue)
+		self.update_lock = threading.Lock()
 		self.run_periodic = None
 
 
@@ -149,10 +151,11 @@ class MidiClient:
 		"""
 		if self.MC.inp:
 			while self.running:
-				
+				self.update_lock.acquire()
 				msg = self.MC.test_inp()
 				if msg:
 					queue.put(msg)
+				self.update_lock.release()
 
 	def endApplication(self):
 		self.running = 0
@@ -191,6 +194,45 @@ class GuiEx:
 				print( msg)
 			except queue.Empty:
 				pass
+
+class Timer(threading.Thread):
+	# meta-cite https://github.com/nhfruchter/music-transcription/blob/master/bettertimer.py
+	# CITE: http://stackoverflow.com/questions/12435211/python-threading-timer-repeat-function-every-n-seconds
+	"""A (slightly) better timer for Tkinter. At the millisecond level, 
+	Tk.after() is very jittery and this seems to work a lot better.
+	
+	timer = Timer(delay_seconds, function_to_call)
+	
+	Example:
+	from bettertimer import *
+	timer = Timer(0.001, self.timerFired )
+	timer.run()
+	"""
+	def __init__(self, delay, function):
+		self.stopped = False
+		self.paused = False
+		self.delay = delay # seconds
+		self.function = function
+		self.firedCounter = 0 # how many times the timer has fired
+		Thread.__init__(self)
+
+	def stop(self):
+		self.stopped = True	
+		
+	def pause(self):
+		self.paused = not self.paused	
+
+	def run(self):
+		"""Implementation of threading.Thread() run function, which is the
+		thread's main loop."""
+		while not self.stopped:
+			if ( not self.paused ):
+				self.firedCounter += 1
+				self.function()
+				time.sleep(self.delay)
+			else:
+				continue	
+
 
 if __name__ == '__main__':
 	MC = MidiControl()

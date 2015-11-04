@@ -236,6 +236,7 @@ class MainProgram:
 		self.do_something = None
 		if debug:
 			self.directory = "C:/Code/python/mdvj/mdvj/scrot"
+			self.input_name = None
 			self.Run()
 		else:
 			self.Setup()
@@ -249,8 +250,7 @@ class MainProgram:
 		self.root.resizable(0,0)	
 		self.gui = MainGui(self.root,self,self.directory,self.input_name)
 		self.log = LogGui(self.root)
-		self.log.set_queue(self.gui.event_queue)
-		self.log.start()
+		self.gui.control.log = self.log
 		self.root.mainloop()
 
 	def Setup(self):

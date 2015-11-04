@@ -36,9 +36,10 @@ class Controller():
 	interface through which can control md
 	"""
 
-	def __init__(self,gui):
+	def __init__(self,gui,log=None):
 		self.mdc = ControlMD()
 		self.gui = gui
+		self.log = None
 
 		self.master = self.gui.root
 		self.quit = self.gui.quit
@@ -102,8 +103,12 @@ class Controller():
 	def select_pad(self,lr,padno):
 		pc = self.get_pad_container(lr,padno)
 		if pc:
-			self.mdc.select_preset(pc.preset)
-			self.gui.queue.put(['pad',[lr, padno]])
+			self.select_preset(pc.preset,lr,padno)
+			if self.log.recording:
+				self.log.add_to_log(self.select_preset,[pc.preset,lr,padno],pc.preset.name)
+	def select_preset(self,preset,lr,padno):
+		self.mdc.select_preset(preset)
+		self.gui.queue.put(['pad',[lr, padno]])		
 
 	def select_pad_gui(self,lr,padno):
 		if self.last_pad and self.last_pad != [lr, padno]: # deselect (in gui) last pad

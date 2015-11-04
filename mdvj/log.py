@@ -21,11 +21,11 @@ class PresetLog:
 	def start(self):
 		self.start_time = time.time()
 
-	def add_event(self,fxn,args=[]):
+	def add_event(self,fxn,args=[],name=None):
 		last = None
 		if self.log:
 			last = self.log[self.last_ind-1]
-		self.log.append(LogLine(time.time() - self.start_time,self.last_ind,fxn,args,last))
+		self.log.append(LogLine(time.time() - self.start_time,self.last_ind,fxn,args,name,last))
 		self.last_ind += 1
 
 	def swap_events(self,e1,e2):
@@ -65,12 +65,16 @@ class LogLine:
 	a single line of the log, works like a linked list
 	"""
 
-	def __init__(self,timestamp,index,fxn_called=None,args=[],prev_log=None):
+	def __init__(self,timestamp,index,fxn_called=None,args=[],name=None,prev_log=None):
 		self.timestamp = timestamp
 		self.index = index
 		self.next_log = None
 		self.time_int = 0
 		self.args = args
+		if not name:
+			self.name = str(args)
+		else:
+			self.name = name
 		if prev_log:
 			prev_log.link_line(self)
 		self.fxn_called = fxn_called
@@ -124,19 +128,23 @@ class LogGui:
 		self.master = master
 		self.queue = None
 		self.running = 0
+		self.recording = 0
 		if not master:
 			self.master = tk.Tk()
 			self.master.wm_state('iconic')
+
+
 		self.logs = [PresetLog()]
 		self.current_log_index = 0
 		# gui whatever
 		self.win = tk.Toplevel()
+		self.win.title("log")
 		self.mainframe = tk.Frame(self.win)
 
 		self.buttonframe = tk.Frame(self.mainframe)
 		self.playpause = tk.Button(self.buttonframe,text='> ||',width=5,command=self.logs[self.current_log_index].play)
-		self.record = tk.Button(self.buttonframe,text='O',width=5)
-		self.stop = tk.Button(self.buttonframe,text='[ ]',width=5,command=self.logs[self.current_log_index].stop)
+		self.record = tk.Button(self.buttonframe,text='O',width=5,command=self.start_recording)
+		self.stop = tk.Button(self.buttonframe,text='[ ]',width=5,command=self.stop_recording)
 		self.playpause.pack(side=tk.LEFT)
 		self.record.pack(side=tk.LEFT)
 		self.stop.pack()
@@ -165,12 +173,12 @@ class LogGui:
 		self.tree.bind('<Return>',self.time_change)
 
 
-	def add_to_log(self,fxn,args=[]):
-		self.logs[self.current_log_index].add_event(fxn,args)
+	def add_to_log(self,fxn,args=[],name=None):
+		self.logs[self.current_log_index].add_event(fxn,args,name)
 		self.log_to_tree(self.logs[self.current_log_index].log[-1])
 
 	def log_to_tree(self,logline):
-		self.tree.insert('', 'end', text="%.2f" % logline.timestamp, values=('',logline.args,logline.index))
+		self.tree.insert('', 'end', text="%.2f" % logline.timestamp, values=('',logline.name,logline.index))
 
 	def set_queue(self,queue):
 		self.queue = queue
@@ -180,6 +188,14 @@ class LogGui:
 			self.running = 1
 			self.periodicCall()
 		self.master.mainloop()
+
+	def start_recording(self,event=None):
+		self.recording = 1
+		self.logs[self.current_log_index].start()
+
+	def stop_recording(self,event=None):
+		self.recording = 0
+		self.logs[self.current_log_index].stop()
 
 	def periodicCall(self):
 		self.processIncoming()
@@ -270,7 +286,7 @@ class TimeChanger:
 		self.change_fun = change_fun
 
 		self.top = tk.Toplevel(takefocus=True)
-		self.top.title("edit log line")
+		self.top.title("edit time")
 		self.frame = tk.Frame(self.top)
 		self.frame.pack()
 

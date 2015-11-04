@@ -115,6 +115,8 @@ class MainGui:
 		self.padgroup_r.show_group(self.padgroup_r_n)
 		self.root.update_idletasks()
 		self.check_lr()
+		if self.control.log.recording:
+			self.control.log.add_to_log(self.go_l,name='== go l ==')
 		self.control.MC.resume()
 
 	def go_r(self):
@@ -125,6 +127,8 @@ class MainGui:
 		self.padgroup_r.show_group(self.padgroup_r_n)
 		self.root.update_idletasks()
 		self.check_lr()
+		if self.control.log.recording:
+			self.control.log.add_to_log(self.go_r,name='== go r ==')
 		self.control.MC.resume()
 
 	def quit(self):

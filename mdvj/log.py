@@ -20,8 +20,9 @@ class PresetLog:
 
 	def start(self):
 		self.start_time = time.time()
+		self.add_event()
 
-	def add_event(self,fxn,args=[],name=None):
+	def add_event(self,fxn=None,args=[],name=None):
 		last = None
 		if self.log:
 			last = self.log[self.last_ind-1]
@@ -54,10 +55,10 @@ class PresetLog:
 		self.start_time = time.time()
 
 	def pause(self):
-		self.add_event(lambda:print('paused'))
+		self.add_event(lambda *args:print('paused'),'p/r')
 
 	def resume(self):
-		self.add_event()
+		self.add_event(args='p/r')
 
 
 class LogLine:
@@ -80,7 +81,7 @@ class LogLine:
 		self.fxn_called = fxn_called
 		if not self.fxn_called: # in case of resume event
 			self.time_int = 0
-			self.fxn_called = lambda: None
+			self.fxn_called = lambda *args: None
 		def fxn():
 			self.fxn_called(*self.args)
 			if self.next_log:
@@ -133,7 +134,6 @@ class LogGui:
 			self.master = tk.Tk()
 			self.master.wm_state('iconic')
 
-
 		self.logs = [PresetLog()]
 		self.current_log_index = 0
 		# gui whatever
@@ -142,7 +142,7 @@ class LogGui:
 		self.mainframe = tk.Frame(self.win)
 
 		self.buttonframe = tk.Frame(self.mainframe)
-		self.playpause = tk.Button(self.buttonframe,text='> ||',width=5,command=self.logs[self.current_log_index].play)
+		self.playpause = tk.Button(self.buttonframe,text='>',width=5,command=self.play_recording,state='disabled')
 		self.record = tk.Button(self.buttonframe,text='O',width=5,command=self.start_recording)
 		self.stop = tk.Button(self.buttonframe,text='[ ]',width=5,command=self.stop_recording)
 		self.playpause.pack(side=tk.LEFT)
@@ -178,7 +178,8 @@ class LogGui:
 		self.log_to_tree(self.logs[self.current_log_index].log[-1])
 
 	def log_to_tree(self,logline):
-		self.tree.insert('', 'end', text="%.2f" % logline.timestamp, values=('',logline.name,logline.index))
+		if logline.args != 'p/r':
+			self.tree.insert('', 'end', text="%.2f" % logline.timestamp, values=('',logline.name,logline.index))
 
 	def set_queue(self,queue):
 		self.queue = queue
@@ -189,13 +190,34 @@ class LogGui:
 			self.periodicCall()
 		self.master.mainloop()
 
+	def play_recording(self,event=None):
+		self.recording = 0
+		self.logs[self.current_log_index].play()
+
 	def start_recording(self,event=None):
 		self.recording = 1
 		self.logs[self.current_log_index].start()
+		# if not self.play_pause: # aka if paused (done playing)
+		self.playpause.config(state='disabled')
+		self.record.config(text='||',command=self.pause_recording)
 
 	def stop_recording(self,event=None):
 		self.recording = 0
 		self.logs[self.current_log_index].stop()
+		self.playpause.config(state='active')
+		self.record.config(text='O',command=self.start_recording,state='active')
+
+	def pause_recording(self,event=None):
+		self.recording = 0
+		self.logs[self.current_log_index].pause()
+		self.playpause.config(state='active')
+		self.record.config(text='0',command=self.resume_recording)
+
+	def resume_recording(self,event=None):
+		self.recoring = 1
+		self.logs[self.current_log_index].resume()
+		self.playpause.config(state='disabled')
+		self.record.config(text='||',command=self.pause_recording)
 
 	def periodicCall(self):
 		self.processIncoming()
@@ -339,9 +361,10 @@ def main():
 	# root = tk.Tk()
 	# root.wm_state('iconic')
 	loggui = LogGui()
+	loggui.start_recording()
 	for i in range(1,6):
-		loggui.add_to_log(print,[i])
 		time.sleep(.2)
+		loggui.add_to_log(print,[i])
 	loggui.start()
 	#root.mainloop()
 

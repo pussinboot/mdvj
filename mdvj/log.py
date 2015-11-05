@@ -2,8 +2,9 @@
 lets you log what presets got activated when
 hope is to be able to play back again with or without rearranging
 to-do
-> update gui with current playing
-> save/load logs
+> save/load logs // not possible without complete rewrite 
+	since can't pickle fxn calls, and would have to save all presets
+	basically, a big pain in the butt
 """
 import threading, time
 import tkinter as tk
@@ -15,8 +16,8 @@ class PresetLog:
 	an entire log
 	"""
 
-	def __init__(self,title='untitled'):
-
+	def __init__(self,gui,title='untitled'):
+		self.gui = gui
 		self.title = title
 		self.log = []
 		self.last_ind = 0
@@ -47,6 +48,13 @@ class PresetLog:
 		else:
 			event.fxn = lambda: None
 		event.time_int = 0
+
+	def update_current(self,e):
+		self.resume_point = e
+		if self.gui.tree.exists('%i' % e):
+			if e == len(self.log) - 2:
+				self.gui.playpause.config(text='>',command=self.gui.play_recording)
+			self.gui.tree.selection_set('%i' % e)
 
 	def play(self):
 		if self.log:
@@ -108,8 +116,8 @@ class LogLine:
 			self.fxn_called = lambda *args: None
 
 		def fxn():
+			self.parent.update_current(self.index)
 			self.fxn_called(*self.args)
-			self.parent.resume_point = self.index
 			#print('parent is now @',self.parent.resume_point)
 			if self.next_log:
 				self.next_log.redo()
@@ -161,7 +169,7 @@ class LogGui:
 			self.master = tk.Tk()
 			self.master.wm_state('iconic')
 
-		self.logs = [PresetLog()]
+		self.logs = [PresetLog(self)]
 		self.current_log_index = 0
 		# gui whatever
 		self.win = tk.Toplevel()
@@ -208,10 +216,10 @@ class LogGui:
 
 	def log_to_tree(self,logline):
 		if logline.args != 'p/r':
-			self.tree.insert('', 'end', text="%.2f" % logline.timestamp, values=('',logline.name,logline.index))
+			self.tree.insert('', 'end',iid='%i' % logline.index, text="%.2f" % logline.timestamp, values=('',logline.name,logline.index))
 
 	def delete_log(self,event=None):
-		self.logs[self.current_log_index] = PresetLog()
+		self.logs[self.current_log_index] = PresetLog(self)
 		self.recording = 0
 		self.playpause.config(state='disabled')
 		self.record.config(text='O',command=self.start_recording,state='active')

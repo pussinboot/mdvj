@@ -315,7 +315,7 @@ class MainProgram:
 		
 
 def main():
-	mainp = MainProgram(debug=False)
+	mainp = MainProgram(debug=True)
 	mainp.Save()
 
 if __name__ == '__main__':

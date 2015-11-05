@@ -1,6 +1,9 @@
 """
 lets you log what presets got activated when
 hope is to be able to play back again with or without rearranging
+to-do
+> update gui with current playing
+> save/load logs
 """
 import threading, time
 import tkinter as tk
@@ -13,9 +16,11 @@ class PresetLog:
 	"""
 
 	def __init__(self,title='untitled'):
+
 		self.title = title
 		self.log = []
 		self.last_ind = 0
+		self.resume_point = -1
 		self.start_time = time.time()
 
 	def start(self):
@@ -26,14 +31,13 @@ class PresetLog:
 		last = None
 		if self.log:
 			last = self.log[self.last_ind-1]
-		self.log.append(LogLine(time.time() - self.start_time,self.last_ind,fxn,args,name,last))
+		self.log.append(LogLine(self,time.time() - self.start_time,self.last_ind,fxn,args,name,last))
 		self.last_ind += 1
 
 	def swap_events(self,e1,e2):
 		if e1 != e2:
 			# print("swapping {0} w/ {1}".format(e1,e2))
 			self.log[e1].swap_funcs(self.log[e2])
-		#event1.swap_funcs(event2)
 
 	def delete_event(self,e):
 		event = self.log[e]
@@ -48,14 +52,28 @@ class PresetLog:
 		if self.log:
 			self.log[0].redo()
 
+	def resume_playback(self):
+		#print(len(self.log),self.resume_point)
+		if self.resume_point != -1:
+			if self.resume_point == len(self.log) - 1:
+				self.log[0].redo()
+			else:
+				self.log[self.resume_point].redo()
+
+	def pause_playback(self):
+		for log in self.log[self.resume_point+1::-1]:
+			if log.cancel():
+				break
+				#self.resume_point = i
+
 	def stop(self):
-		for log in self.log[::-1]:
+		for log in self.log[self.resume_point+1::-1]:
 			if log.cancel():
 				break
 		self.start_time = time.time()
 
 	def pause(self):
-		self.add_event(lambda *args:print('paused'),'p/r')
+		self.add_event(args='p/r')#lambda *args:print('paused'),'p/r')
 
 	def resume(self):
 		self.add_event(args='p/r')
@@ -66,24 +84,33 @@ class LogLine:
 	a single line of the log, works like a linked list
 	"""
 
-	def __init__(self,timestamp,index,fxn_called=None,args=[],name=None,prev_log=None):
+	def __init__(self,parent,timestamp,index,fxn_called=None,args=[],name=None,prev_log=None):
+
+		self.parent = parent
 		self.timestamp = timestamp
 		self.index = index
 		self.next_log = None
 		self.time_int = 0
 		self.args = args
+
 		if not name:
 			self.name = str(args)
 		else:
 			self.name = name
+
 		if prev_log:
 			prev_log.link_line(self)
+
 		self.fxn_called = fxn_called
+
 		if not self.fxn_called: # in case of resume event
 			self.time_int = 0
 			self.fxn_called = lambda *args: None
+
 		def fxn():
 			self.fxn_called(*self.args)
+			self.parent.resume_point = self.index
+			#print('parent is now @',self.parent.resume_point)
 			if self.next_log:
 				self.next_log.redo()
 
@@ -145,9 +172,11 @@ class LogGui:
 		self.playpause = tk.Button(self.buttonframe,text='>',width=5,command=self.play_recording,state='disabled')
 		self.record = tk.Button(self.buttonframe,text='O',width=5,command=self.start_recording)
 		self.stop = tk.Button(self.buttonframe,text='[ ]',width=5,command=self.stop_recording)
+		self.delete_all = tk.Button(self.buttonframe,text='(X)',width=5,command=self.delete_log)
 		self.playpause.pack(side=tk.LEFT)
 		self.record.pack(side=tk.LEFT)
-		self.stop.pack()
+		self.stop.pack(side=tk.LEFT)
+		self.delete_all.pack()
 
 		self.treeframe = tk.Frame(self.mainframe)
 		self.tree = ttk.Treeview(self.treeframe, columns=("col1","col2"), displaycolumns="col2", selectmode='none')
@@ -166,8 +195,8 @@ class LogGui:
 		self.tree.bind("<ButtonPress-1>",self.bDown)
 		self.tree.bind("<ButtonRelease-1>",self.bUp, add='+')
 		self.tree.bind("<B1-Motion>",self.bMove, add='+')
-		#self.tree.bind("<Shift-ButtonPress-1>",self.bDown_Shift, add='+')
-		#self.tree.bind("<Shift-ButtonRelease-1>",self.bUp_Shift, add='+')
+		self.tree.bind("<Shift-ButtonPress-1>",self.bDown_Shift, add='+')
+		self.tree.bind("<Shift-ButtonRelease-1>",self.bUp_Shift, add='+')
 		self.tree.bind('<Delete>',self.deleter)
 		self.tree.bind('<Double-1>',self.time_change)
 		self.tree.bind('<Return>',self.time_change)
@@ -181,6 +210,14 @@ class LogGui:
 		if logline.args != 'p/r':
 			self.tree.insert('', 'end', text="%.2f" % logline.timestamp, values=('',logline.name,logline.index))
 
+	def delete_log(self,event=None):
+		self.logs[self.current_log_index] = PresetLog()
+		self.recording = 0
+		self.playpause.config(state='disabled')
+		self.record.config(text='O',command=self.start_recording,state='active')
+		self.tree.delete(*self.tree.get_children())
+		self.playpause.config(state='disabled',text='>',command=self.play_recording)
+
 	def set_queue(self,queue):
 		self.queue = queue
 
@@ -193,6 +230,17 @@ class LogGui:
 	def play_recording(self,event=None):
 		self.recording = 0
 		self.logs[self.current_log_index].play()
+		self.playpause.config(text='||',command=self.pause_playback)
+
+	def pause_playback(self,event=None):
+		self.recording = 0
+		self.logs[self.current_log_index].pause_playback()
+		self.playpause.config(text='>',command=self.resume_playback)
+
+	def resume_playback(self,event=None):
+		self.recording = 0
+		self.logs[self.current_log_index].resume_playback()
+		self.playpause.config(text='||',command=self.pause_playback)
 
 	def start_recording(self,event=None):
 		self.recording = 1
@@ -204,7 +252,7 @@ class LogGui:
 	def stop_recording(self,event=None):
 		self.recording = 0
 		self.logs[self.current_log_index].stop()
-		self.playpause.config(state='active')
+		self.playpause.config(state='active',text='>',command=self.play_recording)
 		self.record.config(text='O',command=self.start_recording,state='active')
 
 	def pause_recording(self,event=None):
@@ -214,7 +262,7 @@ class LogGui:
 		self.record.config(text='0',command=self.resume_recording)
 
 	def resume_recording(self,event=None):
-		self.recoring = 1
+		self.recording = 1
 		self.logs[self.current_log_index].resume()
 		self.playpause.config(state='disabled')
 		self.record.config(text='||',command=self.pause_recording)
@@ -275,10 +323,13 @@ class LogGui:
 
 	def deleter(self,event):
 		tv = event.widget
-		item = tv.selection()[0]
-		to_delete_ind = tv.item(item)['values'][-1]
-		self.logs[self.current_log_index].delete_event(to_delete_ind)
-		tv.delete(item)
+		items = tv.selection()
+		if not items:
+			return
+		for item in items:
+			to_delete_ind = tv.item(item)['values'][-1]
+			self.logs[self.current_log_index].delete_event(to_delete_ind)
+			tv.delete(item)
 
 	def time_change(self,event):
 		tv = event.widget

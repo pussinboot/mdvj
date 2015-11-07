@@ -1,10 +1,13 @@
-import os, configparser, win32gui
+import os, configparser, win32gui, queue
 try:
 	import mdvj.giantwin32 as kp # keypressing stuff
 	from mdvj.midi_control import MidiClient
+	from mdvj.osc_control import OscControl
 except:
 	import giantwin32 as kp # keypressing stuff
 	from midi_control import MidiClient
+	from osc_control import OscControl
+
 
 class ControlMD():
 	"""
@@ -47,8 +50,9 @@ class Controller():
 		self.processIncoming = self.gui.processIncoming
 
 		# midi control
-		self.MC = MidiClient(self,refresh_int=25) # midi thread
-
+		#self.MC = MidiClient(self,refresh_int=25) # midi thread
+		# osc control
+		self.osc = OscControl(self)
 
 		self.last_pad = None # store last pad
 		self.last_n = {} # store last key
@@ -72,6 +76,20 @@ class Controller():
 							'brightness':'gG',
 							'scale 2nd layer':'qQ',
 							'flip 2nd layer':'F'}
+
+	def osc_start(self):
+		self.queue = queue.Queue()
+		self.set_queue(self.queue)
+		def osc_to_fun(_,osc_msg):
+			msg = eval(osc_msg)
+			#print(msg)
+			key, val = str(msg[:2]),msg[2]
+			if key in self.key_to_fun:
+				resp = self.key_to_fun[key](val)
+				if resp: self.queue.put(resp)
+
+		self.osc.dispatcher.map("/midi",osc_to_fun)
+		self.osc.start()
 
 	def midi_start(self,inp=None):
 		if inp:
@@ -223,7 +241,8 @@ class Controller():
 			return int(Config.get('IO','Input ID'))
 
 	def close(self):
-		self.MC.endApplication()
+		#self.MC.endApplication()
+		pass
 
 
 #if __name__ == '__main__':

@@ -69,10 +69,11 @@ class MainGui:
 		self.control = Controller(self)
 		if midi_save: midi_save = midi_save + '.ini'
 		inp = self.control.load(midi_save) 
-		self.control.midi_start(inp)
+		#self.control.midi_start(inp)
+		self.control.osc_start()
 
 	def set_queue(self,queue):
-			self.queue = queue
+		self.queue = queue
 
 	def processIncoming(self): # change queue to only handle events that would cause gui changes
 		while self.queue.qsize():
@@ -108,7 +109,7 @@ class MainGui:
 			self.next_col_button.config(state='disabled')
 
 	def go_l(self):
-		self.control.MC.pause()
+		#self.control.MC.pause()
 		self.padgroup_l_n -= 1
 		self.padgroup_r_n -= 1
 		self.padgroup_l.show_group(self.padgroup_l_n)
@@ -117,10 +118,10 @@ class MainGui:
 		self.check_lr()
 		if self.control.log.recording:
 			self.control.log.add_to_log(self.go_l,name='== go l ==')
-		self.control.MC.resume()
+		#self.control.MC.resume()
 
 	def go_r(self):
-		self.control.MC.pause()
+		#self.control.MC.pause()
 		self.padgroup_l_n += 1
 		self.padgroup_r_n += 1
 		self.padgroup_l.show_group(self.padgroup_l_n)
@@ -129,7 +130,7 @@ class MainGui:
 		self.check_lr()
 		if self.control.log.recording:
 			self.control.log.add_to_log(self.go_r,name='== go r ==')
-		self.control.MC.resume()
+		#self.control.MC.resume()
 
 	def quit(self):
 		#self.root.destroy()
@@ -239,8 +240,8 @@ class MainProgram:
 		self.directory = None
 		self.do_something = None
 		if debug:
-			self.directory = "C:/Code/python/mdvj/mdvj/scrot"
-			self.input_name = None
+			self.directory = "C:/Program Files (x86)/Winamp/plugins/milkdrop2/presets"#"C:/Code/python/mdvj/mdvj/scrot"
+			self.input_name = 'Twitch'#None
 			self.Run()
 		else:
 			self.Setup()
@@ -301,7 +302,7 @@ class MainProgram:
 
 	def re_screenshot(self):
 		self.do_something = lambda : self.do_screenshot(False)
-		self.gui.control.MC.endApplication()
+		#self.gui.control.MC.endApplication()
 
 	def do_config(self):
 		mc = ConfigMidi()
@@ -311,7 +312,7 @@ class MainProgram:
 
 	def re_configure(self):
 		self.do_something = self.do_config
-		self.gui.control.MC.endApplication()
+		#self.gui.control.MC.endApplication()
 		
 
 def main():

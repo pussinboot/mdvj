@@ -1,6 +1,6 @@
 ### mdvj v0.5.1 - milkdrop vj midi controller :notes:
 
-simple application that makes it easier to control milkdrop. supports any midi device or control with the mouse alone : ) 
+simple application that makes it easier to control milkdrop. supports any midi device or control with the mouse alone : )
 
 ![preview](https://raw.githubusercontent.com/pussinboot/mdvj/master/preview.PNG)
 
@@ -15,7 +15,7 @@ simple application that makes it easier to control milkdrop. supports any midi d
 
 -OR-
 
-download and extract the precompiled zip from [here](https://dl.dropboxusercontent.com/u/9812886/mdvj_v_0_5_1.zip)
+download and extract the precompiled zip from [here](https://github.com/pussinboot/mdvj/releases/tag/0.5.1)
 
 ## usage instructions
 
@@ -30,11 +30,3 @@ for use with resolume follow the instructions [here](https://github.com/pussinbo
 
 milkdrop uses a funny sorting algorithm for determining order of presets so the name of a preset will not always match up with what you select.
 no worries, the screenshot is still correct.. if this bothers you, you can rename your presets so that milkdrop follows the same order as your file explorer.
-
-if after setup everything closes, just start mdvj again and it will work (this will happen if you have no midi devices sorry)
-
-## to-do
-
-- record/playback function >:D
-- midi output to light up pads on your controller (if supported)
-- midi reset (for knobs that cant be turned all the way around)
